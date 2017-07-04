@@ -1,0 +1,9 @@
+{
+  "name":"Husky Engine",
+  "port":3000,
+  "debug":false,
+  "fonts":[{
+    "name":null,
+    "src":null
+  }]
+}
