@@ -8,7 +8,9 @@ const config    = require('../../config.json');
 let filesList = [];
 
 recursive("./assets/images", (err, files) => {
-  filesList = files.filter((file) => file.indexOf(".DS_Store") === -1).map((file) => file.slice(14));
+  filesList = files.filter((file) => {
+    return ['.DS_Store', '.gitKeep'].indexOf(file.substring(file.lastIndexOf('/')+1)) === -1;
+  }).map((file) => file.slice(14));
 });
 
 router.get('/', (req, res, next) => {
