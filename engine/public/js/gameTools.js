@@ -79,6 +79,9 @@ game.helpers.load = (name, args={}) => {
   });
 
   function valid() {
+    // Reset scripts in case user doesn't provide one
+    resetScripts();
+
     // Reset logic and render ready status
     game.logicReady  = false;
     game.renderReady = false;
@@ -154,6 +157,23 @@ game.helpers.load = (name, args={}) => {
 
   function invalid() {
     game.helpers.load('error', {type: "SCENE_NOT_FOUND", msg: `Attempt to load scene "${name}" failed.`});
+  }
+
+  function resetScripts() {
+    game.scripts = {
+      init(cb) {},
+      onTouch(button) {},
+      onTap(button) {},
+      onHold(button) {},
+      onUntouch(button) {},
+      onKeyTouch(key) {},
+      onKeyTap(key) {},
+      onKeyHold(key) {},
+      onKeyUntouch(key) {},
+      layout: {},
+      logic(frame) {},
+      render(frame) {}
+    };
   }
 };
 
