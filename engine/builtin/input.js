@@ -88,10 +88,6 @@ game.scripts.onUntouch = (button) => {
 
 // Keyboard listeners
 game.scripts.onKeyTouch = (key) => {
-
-};
-
-game.scripts.onKeyTap = (key) => {
   let char = key;
   if (char === "space") char = ' ';
 
@@ -103,6 +99,10 @@ game.scripts.onKeyTap = (key) => {
     game.vars["_input" + game.loadArgs.name] += char;
     game.local.passwordTimeout = Date.now();
   }
+};
+
+game.scripts.onKeyTap = (key) => {
+
 };
 
 game.scripts.onKeyHold = (key) => {
