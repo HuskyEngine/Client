@@ -88,13 +88,16 @@ game.scripts.onUntouch = (button) => {
 
 // Keyboard listeners
 game.scripts.onKeyTouch = (key) => {
+
   let char = key;
   if (char === "space") char = ' ';
 
   if (char === "Backspace") {
     game.vars["_input" + game.loadArgs.name] = game.vars["_input" + game.loadArgs.name].slice(0, -1);
   } else {
-    if (key === "Enter") return;
+    if (key === "Enter") {
+      return game.helpers.load(game.vars._prev);
+    };
     if (game.vars["_input" + game.loadArgs.name].length >= game.loadArgs.maxlen) return;
     game.vars["_input" + game.loadArgs.name] += char;
     game.local.passwordTimeout = Date.now();
@@ -106,8 +109,18 @@ game.scripts.onKeyTap = (key) => {
 };
 
 game.scripts.onKeyHold = (key) => {
-  if (key === "Enter") {
-    game.helpers.load(game.vars._prev);
+  let char = key;
+  if (char === "space") char = ' ';
+
+  if (char === "Backspace") {
+    game.vars["_input" + game.loadArgs.name] = game.vars["_input" + game.loadArgs.name].slice(0, -1);
+  } else {
+    if (key === "Enter") {
+      return game.helpers.load(game.vars._prev);
+    };
+    if (game.vars["_input" + game.loadArgs.name].length >= game.loadArgs.maxlen) return;
+    game.vars["_input" + game.loadArgs.name] += char;
+    game.local.passwordTimeout = Date.now();
   }
 };
 
