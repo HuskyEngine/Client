@@ -39,6 +39,6 @@ game.scripts.render = (frame) => {
   fillStyle("red");
   game.canvas.ctx.fillRect(0, 0, game.canvas.rwidth, game.canvas.rheight);
   fillStyle("white");
-  text("Husky Engine encountered an error: " + game.loadArgs.type, 32, "100", "100");
-  text(game.loadArgs.msg, 32, "125", 150);
+  text("Husky Engine encountered an error: " + game.loadArgs.type, "32pt Arial", "100", "100");
+  text(game.loadArgs.msg, "32pt Arial", "125", 150);
 };
