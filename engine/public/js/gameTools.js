@@ -79,8 +79,6 @@ game.helpers.load = (name, args={}) => {
   });
 
   function valid() {
-    // Reset scripts in case user doesn't provide one
-    resetScripts();
 
     // Reset logic and render ready status
     game.logicReady  = false;
@@ -117,42 +115,51 @@ game.helpers.load = (name, args={}) => {
     game.ee.removeListener('keyHold',    game.scripts.onKeyHold);
     game.ee.removeListener('keyUntouch', game.scripts.onKeyUntouch);
 
+    // Reset scripts in case user doesn't provide one
+    resetScripts();
+
     // Load in new script
     let _script = document.createElement('script');
-    _script.src = `scenes/${name}.js`;
-    _script.id  = "script";
     $('#script').replaceWith(_script);
+    _script.onload = () => {
+      scriptLoaded();
+    };
+    _script.id  = "script";
+    _script.src = `scenes/${name}.js`;
 
-    // Add new event listeners
-    game.ee.on('touch',   game.scripts.onTouch);
-    game.ee.on('tap',     game.scripts.onTap);
-    game.ee.on('hold',    game.scripts.onHold);
-    game.ee.on('untouch', game.scripts.onUntouch);
+    function scriptLoaded() {
 
-    // Add new event listeners
-    game.ee.on('keyTouch',   game.scripts.onKeyTouch);
-    game.ee.on('keyTap',     game.scripts.onKeyTap);
-    game.ee.on('keyHold',    game.scripts.onKeyHold);
-    game.ee.on('keyUntouch', game.scripts.onKeyUntouch);
+      // Add new event listeners
+      game.ee.on('touch',   game.scripts.onTouch);
+      game.ee.on('tap',     game.scripts.onTap);
+      game.ee.on('hold',    game.scripts.onHold);
+      game.ee.on('untouch', game.scripts.onUntouch);
 
-    // Get settings
-    game.settings.holdDelay = (game.scripts.layout._misc && game.scripts.layout._misc.holdDelay !== undefined) ? game.scripts.layout._misc.holdDelay : 200;
+      // Add new event listeners
+      game.ee.on('keyTouch',   game.scripts.onKeyTouch);
+      game.ee.on('keyTap',     game.scripts.onKeyTap);
+      game.ee.on('keyHold',    game.scripts.onKeyHold);
+      game.ee.on('keyUntouch', game.scripts.onKeyUntouch);
 
-    // Update button names
-    try {
-      game.button.names = Object.keys(game.scripts.layout.buttons).filter(key => key !== "_misc");
-    } catch(e) {
-      game.button.names = [];
+      // Get settings
+      game.settings.holdDelay = (game.scripts.layout._misc && game.scripts.layout._misc.holdDelay !== undefined) ? game.scripts.layout._misc.holdDelay : 200;
+
+      // Update button names
+      try {
+        game.button.names = Object.keys(game.scripts.layout.buttons).filter(key => key !== "_misc");
+      } catch(e) {
+        game.button.names = [];
+      }
+
+      // Reset render and logic frame to 0
+      game.renderFrame = 0;
+      game.logicFrame  = 0;
+
+      // Run init before giving logic loop green light
+      game.scripts.init(() => {
+        game.logicReady = true;
+      });
     }
-
-    // Reset render and logic frame to 0
-    game.renderFrame = 0;
-    game.logicFrame  = 0;
-
-    // Run init before giving logic loop green light
-    game.scripts.init(() => {
-      game.logicReady = true;
-    });
   }
 
   function invalid() {
@@ -297,7 +304,8 @@ game.helpers.updateKeys = (event, end = false) => {
        "8","9","0","-","=","~","!","@","#","$",
        "%","^","&","*","(",")","_","+","[","]",
        "\\","{","}","|",";","'",":","\"",",",".",
-       "/","<",">","?","'"," ","Backspace","Escape","Enter"].indexOf(event.key) === -1) return;
+       "/","<",">","?","'"," ","Backspace",
+       "Escape","Enter"].indexOf(event.key) === -1) return;
 
   let info = [];
   let affected = [];
@@ -325,7 +333,6 @@ game.helpers.updateKeys = (event, end = false) => {
       game.ee.emit('keyUntouch', key.name);
     }
   });
-
 
   // Save time
   if (end) delete game.key.held[event.key];
