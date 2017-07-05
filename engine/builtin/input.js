@@ -97,7 +97,7 @@ game.scripts.onKeyTouch = (key) => {
   } else {
     if (key === "Enter") {
       return game.helpers.load(game.vars._prev);
-    };
+    } else if (key === "Escape") return;
     if (game.vars["_input" + game.loadArgs.name].length >= game.loadArgs.maxlen) return;
     game.vars["_input" + game.loadArgs.name] += char;
     game.local.passwordTimeout = Date.now();
@@ -117,7 +117,7 @@ game.scripts.onKeyHold = (key) => {
   } else {
     if (key === "Enter") {
       return game.helpers.load(game.vars._prev);
-    };
+    } else if (key === "Escape") return;
     if (game.vars["_input" + game.loadArgs.name].length >= game.loadArgs.maxlen) return;
     game.vars["_input" + game.loadArgs.name] += char;
     game.local.passwordTimeout = Date.now();

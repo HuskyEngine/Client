@@ -241,14 +241,22 @@ game.logicLoop = setInterval(() => {
 
       // Set touched flag so it only emits once
       game.key.data[key].touched = true;
-      game.ee.emit('keyTouch', key);
-
       consoleHandler(key);
+
+      // Don't let console input leak through when opened
+      if (!game.vars._console.display) {
+        game.ee.emit('keyTouch', key);
+      }
     }
 
     // Hold event if holdDelay threshold is met
     if (game.key.held[key] !== undefined && Date.now() - game.key.data[key].start > game.settings.holdDelay) {
-      game.ee.emit('keyHold', key);
+      consoleHandler(key);
+
+      // Don't let console input leak through when opened
+      if (!game.vars._console.display) {
+        game.ee.emit('keyHold', key);
+      }
     }
   });
 

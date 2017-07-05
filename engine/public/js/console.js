@@ -1,5 +1,4 @@
 function consoleHandler(key) {
-  // Type commands into console
   if (game.vars._console.display) {
     if (key === "Backspace") {
       game.vars._console.content = game.vars._console.content.slice(0, -1);
