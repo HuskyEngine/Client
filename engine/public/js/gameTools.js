@@ -130,16 +130,9 @@ game.helpers.load = (name, args={}) => {
     function scriptLoaded() {
 
       // Add new event listeners
-      game.ee.on('touch',   game.scripts.onTouch);
-      game.ee.on('tap',     game.scripts.onTap);
-      game.ee.on('hold',    game.scripts.onHold);
-      game.ee.on('untouch', game.scripts.onUntouch);
-
-      // Add new event listeners
-      game.ee.on('keyTouch',   game.scripts.onKeyTouch);
-      game.ee.on('keyTap',     game.scripts.onKeyTap);
-      game.ee.on('keyHold',    game.scripts.onKeyHold);
-      game.ee.on('keyUntouch', game.scripts.onKeyUntouch);
+      ["touch", "tap", "hold", "untouch", "keyTouch", "keyTap", "keyHold", "keyUntouch"].forEach((event) => {
+        addEvent(event);
+      });
 
       // Get settings
       game.settings.holdDelay = (game.scripts.layout._misc && game.scripts.layout._misc.holdDelay !== undefined) ? game.scripts.layout._misc.holdDelay : 200;
@@ -159,6 +152,13 @@ game.helpers.load = (name, args={}) => {
       game.scripts.init(() => {
         game.logicReady = true;
       });
+
+      function addEvent(eventName) {
+        // if is an array, then already has events
+        if (!Array.isArray(game.ee._events["on" + eventName.slice(0, 1).toUpperCase() + eventName.slice(1)])) {
+          game.ee.on(eventName, game.scripts["on" + eventName.slice(0, 1).toUpperCase() + eventName.slice(1)]);
+        }
+      }
     }
   }
 
