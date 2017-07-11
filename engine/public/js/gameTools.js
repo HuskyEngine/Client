@@ -329,8 +329,15 @@ game.helpers.updateKeys = (event, end = false) => {
     }
 
     if (end) {
-      delete game.key.data[key.name];
-      game.ee.emit('keyUntouch', key.name);
+      if (key.name.length === 1) {
+        delete game.key.data[key.name.toUpperCase()];
+        delete game.key.data[key.name.toLowerCase()];
+        game.ee.emit('keyUntouch', key.name.toUpperCase());
+        game.ee.emit('keyUntouch', key.name.toLowerCase());
+      } else {
+        delete game.key.data[key.name];
+        game.ee.emit('keyUntouch', key.name);
+      }
     }
   });
 
