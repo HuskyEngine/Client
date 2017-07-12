@@ -134,33 +134,20 @@ $(() => {
   */
 
   // Touch detection
-  canvas.addEventListener("touchstart", e => {
-    game.helpers.updateButtons(e);
-  }, false);
-
-  canvas.addEventListener("touchend", e => {
-    game.helpers.updateButtons(e, true);
-  }, false);
-
-  canvas.addEventListener("touchmove", e => {
-    game.helpers.updateButtons(e);
-  }, false);
+  canvas.addEventListener("touchstart",    game.helpers.updateButtons, false);
+  canvas.addEventListener("touchend", e => game.helpers.updateButtons(e, true), false);
+  canvas.addEventListener("touchmove",     game.helpers.updateButtons, false);
 
   // Key detection
-  document.addEventListener("keydown", e => {
-    game.helpers.updateKeys(e);
-  }, false);
-
-  document.addEventListener("keyup", e => {
-    game.helpers.updateKeys(e, true);
-  }, false);
+  document.addEventListener("keydown",    game.helpers.updateKeys, false);
+  document.addEventListener("keyup", e => game.helpers.updateKeys(e, true), false);
   ///////////////////
 
   // Resize on first load to properly init canvas
   game.helpers.resize();
 
   // Run resize on orientation change and window resize events
-  window.addEventListener('resize', game.helpers.resize);
+  window.addEventListener('resize',            game.helpers.resize);
   window.addEventListener('orientationchange', game.helpers.resize);
 
   // Load the load scene first
@@ -265,4 +252,3 @@ game.logicLoop = setInterval(() => {
 
   if (game.logicFrame % 30 === 0) game.vars._console.blink = !game.vars._console.blink;
 }, 1000/60);
-
