@@ -134,13 +134,31 @@ $(() => {
   */
 
   // Touch detection
-  canvas.addEventListener("touchstart",    game.helpers.updateButtons, false);
-  canvas.addEventListener("touchend", e => game.helpers.updateButtons(e, true), false);
-  canvas.addEventListener("touchmove",     game.helpers.updateButtons, false);
+  canvas.addEventListener("touchstart", e => {
+    e.preventDefault();
+    game.helpers.updateButtons(e);
+  }, false);
+
+  canvas.addEventListener("touchend", e => {
+    e.preventDefault();
+    game.helpers.updateButtons(e, true);
+  }, false);
+
+  canvas.addEventListener("touchmove", e => {
+    e.preventDefault();
+    game.helpers.updateButtons(e);
+  }, false);
 
   // Key detection
-  document.addEventListener("keydown",    game.helpers.updateKeys, false);
-  document.addEventListener("keyup", e => game.helpers.updateKeys(e, true), false);
+  document.addEventListener("keydown", e => {
+    e.preventDefault();
+    game.helpers.updateKeys(e);
+  }, false);
+
+  document.addEventListener("keyup", e => {
+    e.preventDefault();
+    game.helpers.updateKeys(e, true);
+  }, false);
   ///////////////////
 
   // Resize on first load to properly init canvas
@@ -250,5 +268,5 @@ game.logicLoop = setInterval(() => {
   // Pass in logic frame for timing
   game.scripts.logic(++game.logicFrame);
 
-  if (game.logicFrame % 30 === 0) game.vars._console.blink = !game.vars._console.blink;
+  game.vars._console.blink = (Date.now()/100) % 10 > 5;
 }, 1000/60);
