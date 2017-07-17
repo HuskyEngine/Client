@@ -88,37 +88,31 @@ game.scripts.logic = (frame) => {
 game.scripts.render = (frame) => {
   game.animations.clear();
 
-  if (game.helpers.mobileCheck()) {
+  // Restore transparency
+  alpha(game.scripts.layout._misc.transparency);
 
-    // Restore transparency
-    alpha(game.scripts.layout._misc.transparency);
+  // A button
+  alpha(game.button.held.a ? 1 : game.scripts.layout._misc.transparency);
+  drawImage("buttons/a.svg", game.scripts.layout.buttons.a.x,       game.scripts.layout.buttons.a.y,       game.scripts.layout.buttons.a.width, game.scripts.layout.buttons.a.height);
 
-    // A button
-    alpha(game.button.held.a ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/a.svg", game.scripts.layout.buttons.a.x,       game.scripts.layout.buttons.a.y,       game.scripts.layout.buttons.a.width, game.scripts.layout.buttons.a.height);
+  // B button
+  alpha(game.button.held.b ? 1 : game.scripts.layout._misc.transparency);
+  drawImage("buttons/b.svg", game.scripts.layout.buttons.b.x,       game.scripts.layout.buttons.b.y,       game.scripts.layout.buttons.b.width, game.scripts.layout.buttons.b.height);
 
-    // B button
-    alpha(game.button.held.b ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/b.svg", game.scripts.layout.buttons.b.x,       game.scripts.layout.buttons.b.y,       game.scripts.layout.buttons.b.width, game.scripts.layout.buttons.b.height);
+  // Dpad Controls
+  alpha(game.button.held.up ? 1 : game.scripts.layout._misc.transparency);
+  drawImage("buttons/up.svg", game.scripts.layout.buttons.up.x, game.scripts.layout.buttons.up.y,    game.scripts.layout.buttons.up.width, game.scripts.layout.buttons.up.height);
 
-    // Dpad Controls
-    alpha(game.button.held.up ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/up.svg", game.scripts.layout.buttons.up.x, game.scripts.layout.buttons.up.y,    game.scripts.layout.buttons.up.width, game.scripts.layout.buttons.up.height);
+  alpha(game.button.held.right ? 1 : game.scripts.layout._misc.transparency);
+  drawImage("buttons/right.svg", game.scripts.layout.buttons.right.x, game.scripts.layout.buttons.right.y, game.scripts.layout.buttons.right.width, game.scripts.layout.buttons.right.height);
 
-    alpha(game.button.held.right ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/right.svg", game.scripts.layout.buttons.right.x, game.scripts.layout.buttons.right.y, game.scripts.layout.buttons.right.width, game.scripts.layout.buttons.right.height);
+  alpha(game.button.held.down ? 1 : game.scripts.layout._misc.transparency);
+  drawImage("buttons/down.svg", game.scripts.layout.buttons.down.x, game.scripts.layout.buttons.down.y, game.scripts.layout.buttons.down.width, game.scripts.layout.buttons.down.height);
 
-    alpha(game.button.held.down ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/down.svg", game.scripts.layout.buttons.down.x, game.scripts.layout.buttons.down.y, game.scripts.layout.buttons.down.width, game.scripts.layout.buttons.down.height);
+  alpha(game.button.held.left ? 1 : game.scripts.layout._misc.transparency);
+  drawImage("buttons/left.svg", game.scripts.layout.buttons.left.x,    game.scripts.layout.buttons.left.y, game.scripts.layout.buttons.left.width, game.scripts.layout.buttons.left.height);
+  ////////////////
 
-    alpha(game.button.held.left ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/left.svg", game.scripts.layout.buttons.left.x,    game.scripts.layout.buttons.left.y, game.scripts.layout.buttons.left.width, game.scripts.layout.buttons.left.height);
-    ////////////////
-
-    // Restore transparency
-    alpha(game.scripts.layout._misc.transparency);
-
-  } else {
-
-  }
+  // Restore transparency
+  alpha(game.scripts.layout._misc.transparency);
 };
