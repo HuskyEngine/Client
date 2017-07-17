@@ -94,7 +94,10 @@ let game = {
       content: "",
       enabled: true,
       display: false,
-      log: []
+      history: [],
+      log: [],
+      historyIndex: 0,
+      match: ""
     }
 
   },

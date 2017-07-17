@@ -305,7 +305,8 @@ game.helpers.updateKeys = (event, end = false) => {
        "%","^","&","*","(",")","_","+","[","]",
        "\\","{","}","|",";","'",":","\"",",",".",
        "/","<",">","?","'"," ","Backspace",
-       "Escape","Enter"].indexOf(event.key) === -1) return;
+       "Escape","Enter","ArrowUp","ArrowRight",
+       "ArrowDown","ArrowLeft","Tab"].indexOf(event.key) === -1) return;
 
   let info = [];
   let affected = [];
