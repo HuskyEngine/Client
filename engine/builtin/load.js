@@ -64,45 +64,7 @@ game.scripts.layout = {
 game.scripts.logic = (frame) => {
   // Load assets and update progress
   if (frame === 1) {
-    let filesList = [];
-
-    // Load image assets
-    async.series([
-
-      // Load files list
-      cb => {
-        $.get('/assets.manifest', (files) => {
-          filesList = files;
-          game.local.total = files.length;
-          cb();
-        });
-      },
-
-      // images
-      cb => game.helpers.loadImg("huskyengine", "huskyengine.svg", () => {
-        game.local.huskyLoaded = true;
-        game.local.loadedFrame = game.renderFrame;
-        cb();
-      }),
-
-      // Load all files and update progress
-      cb => {
-        async.eachLimit(filesList, 10, (file, loaded) => {
-          game.helpers.loadImg(file, file, () => {
-            game.local.fileName = file;
-            game.local.current++;
-            loaded();
-          });
-        }, cb);
-      },
-
-    // Finish init
-    ], () => {
-      game.helpers.setTimeout(() => {
-        game.local.fileName = "";
-      }, 1000);
-      game.local.loaded = true;
-    });
+    game.helpers.loadAssets();
   }
 };
 

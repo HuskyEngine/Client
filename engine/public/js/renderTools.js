@@ -118,6 +118,59 @@ function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, d
   }
 }
 
+function drawAnimation(image, dx, dy, frame, canvas=game.canvas.ctx) {
+  if (dx === "center") dx = game.canvas.rwidth/2;
+  if (dy === "center") dy = game.canvas.rheight/2;
+
+  if (game.assets.animations[image] === undefined) {
+    game.helpers.load('error', {type: "ANIMATION_NOT_FOUND", msg: `Attempt to draw animation "${image}" failed.`});
+  }
+
+  canvas.drawImage(game.assets.animations[image], game.assets.animations[image].info.width*frame, 0, game.assets.animations[image].info.width, game.assets.animations[image].info.height, dx, dy, game.assets.animations[image].info.width*4, game.assets.animations[image].height*4);
+}
+
+function drawSprite(spriteInfo, dx, dy, width=null, height=null, canvas=game.canvas.ctx) {
+  let sprite = game.assets.sprites[spriteInfo[0]];
+
+  if (sprite === undefined) {
+    game.helpers.load('error', {type: "SPRITE_NOT_FOUND", msg: `Attempt to draw sprite "${spriteInfo[0]}" failed.`});
+  }
+
+  if (sprite.info[spriteInfo[1]] === undefined) {
+    game.helpers.load('error', {type: "SPRITE_MOVEMENT_NOT_FOUND", msg: `Sprite movement (${spriteInfo[1]}) not found in "${spriteInfo[0]}" JSON specs.`});
+  }
+
+  if (sprite.info[spriteInfo[1]][spriteInfo[2]] === undefined) {
+    game.helpers.load('error', {type: "SPRITE_DIRECTION_NOT_FOUND", msg: `Sprite direction (${spriteInfo[2]}) for movement (${spriteInfo[1]}) not found in "${spriteInfo[0]}" JSON specs.`});
+  }
+
+  if (sprite.info[spriteInfo[1]][spriteInfo[2]].frames < spriteInfo[3] || spriteInfo[3] < 1) {
+    game.helpers.load('error', {type: "SPRITE_FRAME_NOT_FOUND", msg: `Sprite frame (${spriteInfo[3]}) for direction (${spriteInfo[2]}) for movement (${spriteInfo[1]}) not found in "${spriteInfo[0]}" JSON specs.`});
+  }
+
+  let animation = sprite.info[spriteInfo[1]][spriteInfo[2]];
+
+  if (dx === "center") dx = game.canvas.rwidth/2;
+  if (dy === "center") dy = game.canvas.rheight/2;
+
+  // Update position with offsets
+  dx += animation.offsetX;
+  dy += animation.offsetY;
+
+  // Default canvas and no width/height
+  if (width === null) {
+    width  = animation.width;
+    height = animation.height;
+
+  // No width/height but custom canvas
+  } else if (!Number.isInteger(width)) {
+    canvas = width;
+  }
+
+  // image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+  canvas.drawImage(sprite, animation.x + ((spriteInfo[3]-1) * animation.width), animation.y, animation.width, animation.height, dx, dy, width*4, height*4);
+}
+
 function alpha(val=undefined, canvas=game.canvas.ctx) {
   if (val === undefined) return canvas.globalAlpha;
   canvas.globalAlpha = val;

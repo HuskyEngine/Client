@@ -23,6 +23,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', index);
 app.use('/scenes', express.static(path.join(__dirname, '..', 'scenes')));
 app.use('/img', express.static(path.join(__dirname, '..', 'assets/images')));
+app.use('/sprites', express.static(path.join(__dirname, '..', 'assets/sprites')));
+app.use('/animations', express.static(path.join(__dirname, '..', 'assets/animations')));
 app.use('/fonts', express.static(path.join(__dirname, '..', 'assets/fonts')));
 app.use('/apple-touch-icon.png', express.static(path.join(__dirname, '..', 'reverselogo.png')));
 

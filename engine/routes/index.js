@@ -5,12 +5,28 @@ const recursive = require("recursive-readdir");
 const router    = express.Router();
 const config    = require('../../config.json');
 
-let filesList = [];
+let images     = [];
+let sprites    = [];
+let animations = [];
 
 recursive("./assets/images", (err, files) => {
-  filesList = files.filter((file) => {
+  images = files.filter((file) => {
     return ['.DS_Store', '.gitKeep'].indexOf(file.substring(file.lastIndexOf('/')+1)) === -1;
   }).map((file) => file.slice(14));
+});
+
+recursive("./assets/sprites", (err, files) => {
+  sprites = files.filter((file) => {
+    if (file.slice(-5) === ".json") return;
+    return ['.DS_Store', '.gitKeep'].indexOf(file.substring(file.lastIndexOf('/')+1)) === -1;
+  }).map((file) => file.slice(15));
+});
+
+recursive("./assets/animations", (err, files) => {
+  animations = files.filter((file) => {
+    if (file.slice(-5) === ".json") return;
+    return ['.DS_Store', '.gitKeep'].indexOf(file.substring(file.lastIndexOf('/')+1)) === -1;
+  }).map((file) => file.slice(18));
 });
 
 router.get('/', (req, res, next) => {
@@ -34,7 +50,7 @@ router.get('/scenes/error.js', (req, res, next) => {
 });
 
 router.get('/assets.manifest', (req, res, next) => {
-  res.send(filesList);
+  res.send({images, sprites, animations});
 });
 
 router.get('/css/font.css', (req, res, next) => {

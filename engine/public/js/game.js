@@ -3,8 +3,10 @@ let game = {
 
   // Hold all game assets
   assets: {
-    audio:  {},
-    images: {}
+    animations: {},
+    sprites:    {},
+    audio:      {},
+    images:     {}
   },
 
   // Cache game scenes (WIP)
@@ -98,7 +100,8 @@ let game = {
       log: [],
       historyIndex: 0,
       match: ""
-    }
+    },
+    _mobileCheckOverride: null
 
   },
 
@@ -106,7 +109,7 @@ let game = {
   local: {}
 };
 
-$.get('/config', (data) => {
+$.get('config', (data) => {
   game.vars.config = data;
   game.vars.defaultFont = data.defaultFont;
   game.vars._fps.showFPS = data.debug;
