@@ -28,18 +28,21 @@ function consoleHandler(key) {
     let result = "command not found";
     let commands = {
       clear: {
-        action() {}
+        action() {},
+        man: `Clear the console log.`
       },
       help: {
         action() {
           result = Object.keys(commands);
-        }
+        },
+        man: `Shows available commands.`
       },
       hidefps: {
         action() {
             game.vars._fps.showFPS = false;
-            result = "false";
-        }
+            result = "true";
+        },
+        man: `Hides current framerate.`
       },
       info: {
         action() {
@@ -47,19 +50,87 @@ function consoleHandler(key) {
           game.vars._console.log.unshift(`_prev:       ${game.vars._prev}`);
           game.vars._console.log.unshift(`_scene:     ${game.vars._script}`);
           result = "true";
-        }
+        },
+        man: `Output some useful variable values.`
       },
       load: {
         action() {
           game.helpers.load(command[1], JSON.parse(command[2] || "{}"));
           result = "Loading scene " + (command[1] || "load");
-        }
+        },
+        man: `Load the provided scene.`
+      },
+      man: {
+        action() {
+          if (command[1] === undefined) result = `Please provide a command whose man page you wish to lookup`;
+          else if (!(command[1] in commands)) result = `Man page for ${command[1]} was not found`;
+          else result = (commands[command[1]].man || `No man page available for ${command[1]}`);
+        },
+        man: `Shows manual page of given command if available.`
+      },
+      mode: {
+        action() {
+          if (command[1] === "mobile" || command[1] === "1") {
+            game.vars._mobileCheckOverride = "mobile";
+            result = "Setting game mode to mobile...";
+          } else if (command[1] === "desktop" || command[1] === "2") {
+            game.vars._mobileCheckOverride = "desktop";
+            result = "Setting game mode to desktop...";
+          } else {
+            game.vars._mobileCheckOverride = null;
+            result = "Resetting game mode to auto...";
+          }
+        },
+        man: `Force game into specified mode. Accepts mobile/1, desktop/2, or any other value for automatic detection (default).`
       },
       showfps: {
         action() {
             game.vars._fps.showFPS = true;
             result = "true";
-        }
+        },
+        man: `Shows current framerate.`
+      },
+      refresh: {
+        action() {
+          game.helpers.setTimeout(() => {
+            location.reload(command[1] !== undefined);
+          }, 100);
+          result = command[1] !== undefined ? "Hard refreshing..." : "Refreshing...";
+        },
+        man: `Refreshes the page. Can provide any 2nd argument to hard refresh.`
+      },
+      reload: {
+        action() {
+          game.helpers.setTimeout(() => {
+            if (game.vars._script === "error") {
+              game.helpers.load(game.vars._prev);
+            } else {
+              game.helpers.load(game.vars._script);
+            }
+          }, 100);
+          result = "Reloading scene...";
+        },
+        man: `Reload current scene.`
+      },
+      reloadassets: {
+        action() {
+          game.helpers.setTimeout(() => {
+            game.logicReady  = false;
+            game.renderReady = false;
+            game.helpers.loadAssets();
+
+            // Reset render and logic frame to 0
+            game.renderFrame = 0;
+            game.logicFrame  = 0;
+
+            // Run init before giving logic loop green light
+            game.logicReady = true;
+
+          }, 100);
+
+          result = "Reloading assets";
+        },
+        man: `Reload game assets and then reload scene.`
       }
     };
 
@@ -74,7 +145,7 @@ function consoleHandler(key) {
         game.vars._console.historyIndex = 0;
       }
 
-      game.vars._console.log.unshift('└ result: ' + result);
+      game.vars._console.log.unshift('└ ' + result);
       game.vars._console.log.unshift(raw);
       game.vars._console.history.unshift(raw);
       game.vars._console.content = "";
