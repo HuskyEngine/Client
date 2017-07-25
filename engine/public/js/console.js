@@ -117,14 +117,15 @@ function consoleHandler(key) {
           game.helpers.setTimeout(() => {
             game.logicReady  = false;
             game.renderReady = false;
-            game.helpers.loadAssets();
 
-            // Reset render and logic frame to 0
-            game.renderFrame = 0;
-            game.logicFrame  = 0;
+            game.helpers.loadAssets(() => {
+              // Reset render and logic frame to 0
+              game.renderFrame = 0;
+              game.logicFrame  = 0;
 
-            // Run init before giving logic loop green light
-            game.logicReady = true;
+              // Run init before giving logic loop green light
+              game.logicReady = true;
+            });
 
           }, 100);
 
