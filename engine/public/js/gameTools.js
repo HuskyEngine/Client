@@ -67,6 +67,10 @@ game.helpers.mobileCheck = function() {
 };
 
 game.helpers.load = (name, args={}) => {
+  // Reset logic and render ready status while loading new scene
+  game.logicReady  = false;
+  game.renderReady = false;
+
   if (name === undefined) name = "load"; // Special loading case
   if (name === "error" && args.type === undefined) args.type = "UNKNOWN_ERROR";
 
@@ -83,11 +87,6 @@ game.helpers.load = (name, args={}) => {
   });
 
   function valid() {
-
-    // Reset logic and render ready status
-    game.logicReady  = false;
-    game.renderReady = false;
-
     // Reset local vars
     game.local = {};
 
@@ -397,7 +396,7 @@ game.helpers.setTimeout = (func, delay=0) => {
   game.timeouts.push(setTimeout(func, delay));
 };
 
-game.helpers.loadAssets = () => {
+game.helpers.loadAssets = (done=undefined) => {
   let images     = [];
   let sprites    = [];
   let animations = [];
@@ -421,6 +420,7 @@ game.helpers.loadAssets = () => {
     cb => game.helpers.loadImg("huskyengine", "huskyengine.svg", () => {
       game.local.huskyLoaded = true;
       game.local.loadedFrame = game.renderFrame;
+      game.local.loadedTime  = Date.now();
       cb();
     }),
 
@@ -463,5 +463,6 @@ game.helpers.loadAssets = () => {
       game.local.fileName = "";
     }, 1000);
     game.local.loaded = true;
+    if (done !== undefined) done();
   });
 };
