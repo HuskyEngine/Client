@@ -88,9 +88,20 @@ let game = {
     // FPS counter
     _fps: {
       showFPS: true,
+      rate: 0,
       fps: 0,
       lastCalled: Date.now()
     },
+
+    // Sim/Network info
+    _info: {
+      showInfo: true,
+      sim: 0,
+      render: 0,
+      simLastCalled: Date.now(),
+      renderLastCalled: Date.now()
+    },
+
     _console: {
       blink: false,
       content: "",
@@ -186,6 +197,7 @@ $(() => {
 */
 
 function render() {
+  game.vars._info.renderLastCalled = Date.now();
   if (!game.renderReady) return;
 
   // Calculate FPS
@@ -205,19 +217,47 @@ function render() {
     
     alpha(1);
     fillStyle('white');
-    game.canvas.ctx.fillRect(0, 0, 75, 35);
+    game.canvas.ctx.fillRect(0, 0, 200, 35);
+    game.canvas.ctx.fillRect(0, 0, 200, 65);
+    game.canvas.ctx.fillRect(0, 0, 200, 95);
     fillStyle('black');
-    text(game.vars._fps.fps.toFixed(1), "24pt Arial", 0, 30);
+
+    let fps = game.vars._fps.fps.toFixed(1);
+    let sim = game.vars._info.sim;
+    let ren = game.vars._info.render;
+    //if (sim <= 1) sim = "<= 1";
+    //if (ren <= 1) ren = "<= 1";
+
+    if (fps < (game.vars._fps.rate - game.vars._fps.rate * .05)) fillStyle('orange');
+    if (fps < (game.vars._fps.rate - game.vars._fps.rate * .15)) fillStyle('red');
+    text("fps:  " + fps, "24pt Arial", 0, 30);
+    fillStyle('black');
+
+    if (sim > 1000/game.vars._fps.rate) fillStyle('red');
+    text("sim: " + sim + " ms", "24pt Arial", 0, 60);
+    fillStyle('black');
+
+    if (ren > 1000/game.vars._fps.rate) fillStyle('red');
+    text("ren: " + ren + " ms", "24pt Arial", 0, 90);
+    fillStyle('black');
+
     fillStyle(oldFill);
     alpha(oldAlpha);
   }
 
   // Display Console
   consoleDisplay();
+
+  game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
 }
 
 game.logicLoop = setInterval(() => {
+  game.vars._info.simLastCalled = Date.now();
   if (!game.logicReady) return;
+
+  // Hold delay is set to 300 if console is opened
+  let holdDelay = game.settings.holdDelay;
+  if (game.vars._console.display) holdDelay = 300;
 
   // Logic loop 1st pass is complete, render loop is now ready
   if (game.logicFrame === 2) {
@@ -238,7 +278,7 @@ game.logicLoop = setInterval(() => {
     }
 
     // Hold event if holdDelay threshold is met
-    if (game.button.held[button] !== undefined && Date.now() - game.button.data[button].start > game.settings.holdDelay) {
+    if (game.button.held[button] !== undefined && Date.now() - game.button.data[button].start > holdDelay) {
       game.ee.emit('hold', button);
     }
   });
@@ -261,7 +301,7 @@ game.logicLoop = setInterval(() => {
     }
 
     // Hold event if holdDelay threshold is met
-    if (game.key.held[key] !== undefined && Date.now() - game.key.data[key].start > game.settings.holdDelay) {
+    if (game.key.held[key] !== undefined && Date.now() - game.key.data[key].start > holdDelay) {
       consoleHandler(key);
 
       // Don't let console input leak through when opened
@@ -275,4 +315,6 @@ game.logicLoop = setInterval(() => {
   game.scripts.logic(++game.logicFrame);
 
   game.vars._console.blink = (Date.now()/100) % 10 > 5;
+
+  game.vars._info.sim = Date.now() - game.vars._info.simLastCalled;
 }, 1000/60);
