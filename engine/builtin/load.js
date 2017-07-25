@@ -7,16 +7,20 @@ game.scripts.init = (cb) => {
     engineFont: 10,
     huskyLoaded: false,
     loadedFrame: 0,
+    loadedTime: 0,
     huskyAlpha: 0,
     huskySize: 10,
     poweredByAlpha: 0,
     fadeAway: 1,
     loadMain: false,
     current: 0,
-    total: 0
+    total: 0,
+    start: Date.now()
   };
 
   cb();
+
+  game.local.elapsed = () => Date.now() - game.local.start;
 };
 
 // Button Listeners
@@ -75,7 +79,7 @@ game.scripts.render = (frame) => {
   game.animations.clear();
 
   // Everything loaded, so fade away and load main
-  if (!game.local.loadMain && game.local.loaded && game.renderFrame > game.local.loadedFrame + 300) {
+  if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > 1500) {
     game.local.fadeAway -= .01;
     if (game.local.fadeAway < 0) {
       game.local.fadeAway = 0;
@@ -100,35 +104,54 @@ game.scripts.render = (frame) => {
   text(game.local.current + " / " + game.local.total, "16pt Arial", "center", 1050);
 
   if (game.local.loadMain) {
+    let fps = game.vars._fps.fps;
+    if (fps <= 70) {
+      game.vars._fps.rate = 60;
+    } else if (fps <= 95) {
+      game.vars._fps.rate = 85;
+    } else if (fps <= 110) {
+      game.vars._fps.rate = 100;
+    } else if (fps <= 130) {
+      game.vars._fps.rate = 120;
+    } else if (fps <= 154) {
+      game.vars._fps.rate = 144;
+    } else {
+      game.vars._fps.rate = game.vars._fps.fps;
+    }
     game.helpers.load('main');
   }
 
   // Powered By
   alpha(game.local.poweredByAlpha);
-  if (game.local.poweredByFont < 10) game.local.poweredByFont += .5;
-  else if (game.local.poweredByFont < 20) game.local.poweredByFont += .4;
-  else if (game.local.poweredByFont < 30) game.local.poweredByFont += .3;
-  else if (game.local.poweredByFont < 40) game.local.poweredByFont += .2;
-  else if (game.local.poweredByFont < 50) game.local.poweredByFont += .1;
+  alpha(game.local.fadeAway);
+  if (Date.now() - game.local.loadedTime < 1500) {
+    if (game.local.poweredByFont < 10) game.local.poweredByFont += .5;
+    else if (game.local.poweredByFont < 20) game.local.poweredByFont += .4;
+    else if (game.local.poweredByFont < 30) game.local.poweredByFont += .3;
+    else if (game.local.poweredByFont < 40) game.local.poweredByFont += .2;
+    else if (game.local.poweredByFont < 50) game.local.poweredByFont += .1;
+  }
 
-  text("Powered By", game.local.poweredByFont + "pt Arial", "center", 375-((game.local.huskySize/4)*1.25));
+  text("Powered By", game.local.poweredByFont + "pt Arial", "center", 365-((game.local.huskySize/4)*1.25));
 
-  if (game.renderFrame < game.local.loadedFrame + 210) {
+  if (Date.now() - game.local.loadedTime < 1500) {
     game.local.poweredByAlpha += .01;
     alpha(1);
   }
 
   alpha(game.local.huskyAlpha);
+  alpha(game.local.fadeAway);
   drawImage('huskyengine', game.canvas.rwidth/2-(game.local.huskySize/2), game.canvas.rheight/2-(game.local.huskySize/2)-200+(game.local.huskySize/4), game.local.huskySize, game.local.huskySize);
 
-  if (game.renderFrame < game.local.loadedFrame + 210) {
+  if (Date.now() - game.local.loadedTime < 1500) {
     game.local.huskyAlpha += .01;
-    game.local.huskySize += 2;
+    game.local.huskySize += 3;
     alpha(1);
   }
 
   alpha(game.local.engineAlpha);
-  if (game.renderFrame < game.local.loadedFrame + 210) {
+  alpha(game.local.fadeAway);
+  if (Date.now() - game.local.loadedTime < 1500) {
     if (game.local.engineFont < 10) game.local.engineFont += .5;
     else if (game.local.engineFont < 20) game.local.engineFont += .4;
     else if (game.local.engineFont < 30) game.local.engineFont += .3;
@@ -138,7 +161,7 @@ game.scripts.render = (frame) => {
 
   text("Husky Engine", game.local.engineFont + "pt Arial", "center", 410+((game.local.huskySize/2)*1.6));
 
-  if (game.renderFrame < game.local.loadedFrame + 210) {
+  if (Date.now() - game.local.loadedTime < 1500) {
     game.local.engineAlpha += .01;
     alpha(1);
   }
