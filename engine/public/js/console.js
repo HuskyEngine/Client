@@ -174,6 +174,15 @@ function consoleHandler(key) {
   // Toggle console
   if (key === "Escape") {
     game.vars._console.display = !game.vars._console.display;
+    let val = game.settings.holdDelay;
+
+    if (!game.vars._console.display) {
+      game.helpers.setTimeout(() => {
+        game.settings.holdDelay = (game.scripts.layout._misc && game.scripts.layout._misc.holdDelay !== undefined) ? game.scripts.layout._misc.holdDelay : 200;
+      }, 150);
+    } else {
+      game.settings.holdDelay = 300;
+    }
   }
 }
 

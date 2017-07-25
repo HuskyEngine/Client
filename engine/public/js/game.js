@@ -255,9 +255,7 @@ game.logicLoop = setInterval(() => {
   game.vars._info.simLastCalled = Date.now();
   if (!game.logicReady) return;
 
-  // Hold delay is set to 300 if console is opened
   let holdDelay = game.settings.holdDelay;
-  if (game.vars._console.display) holdDelay = 300;
 
   // Logic loop 1st pass is complete, render loop is now ready
   if (game.logicFrame === 2) {
