@@ -13,14 +13,13 @@ game.scripts.init = (cb) => {
     poweredByAlpha: 0,
     fadeAway: 1,
     loadMain: false,
-    current: 0,
-    total: 0,
+    filesLoaded: 0,
+    totalFiles: 0,
     start: Date.now()
   };
 
-  cb();
-
   game.local.elapsed = () => Date.now() - game.local.start;
+  cb();
 };
 
 // Button Listeners
@@ -68,7 +67,9 @@ game.scripts.layout = {
 game.scripts.logic = (frame) => {
   // Load assets and update progress
   if (frame === 1) {
-    game.helpers.loadAssets();
+    game.helpers.loadAssets(() => {
+      game.helpers.loadMap('default');
+    });
   }
 };
 
@@ -79,7 +80,7 @@ game.scripts.render = (frame) => {
   game.animations.clear();
 
   // Everything loaded, so fade away and load main
-  if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > 1500) {
+  if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > 2000) {
     game.local.fadeAway -= .01;
     if (game.local.fadeAway < 0) {
       game.local.fadeAway = 0;
@@ -92,31 +93,31 @@ game.scripts.render = (frame) => {
 
   let prev = fillStyle();
   fillStyle("#00F");
-  game.canvas.ctx.fillRect(game.canvas.rwidth*.2, 960, (game.local.current/game.local.total)*(game.canvas.rwidth*.8-game.canvas.rwidth*.2), 50);
+  game.canvas.ctx.fillRect(game.canvas.rwidth*.2, 960, (game.local.filesLoaded/game.local.totalFiles)*(game.canvas.rwidth*.8-game.canvas.rwidth*.2), 50);
   fillStyle(prev);
 
-  if (game.local.current/game.local.total > .5) {
+  if (game.local.filesLoaded/game.local.totalFiles > .5) {
     fillStyle("#FFF");
   }
-  text(((game.local.current/game.local.total)*100).toFixed(2) + "%", "20pt Arial", "center", 995);
+  text(((game.local.filesLoaded/game.local.totalFiles)*100).toFixed(2) + "%", "20pt Arial", "center", 995);
   fillStyle(prev);
 
-  text(game.local.current + " / " + game.local.total, "16pt Arial", "center", 1050);
+  text(game.local.filesLoaded + " / " + game.local.totalFiles, "16pt Arial", "center", 1050);
 
   if (game.local.loadMain) {
-    let fps = game.vars._fps.fps;
+    let fps = game.vars._info.fps;
     if (fps <= 70) {
-      game.vars._fps.rate = 60;
+      game.vars._info.rate = 60;
     } else if (fps <= 95) {
-      game.vars._fps.rate = 85;
+      game.vars._info.rate = 85;
     } else if (fps <= 110) {
-      game.vars._fps.rate = 100;
+      game.vars._info.rate = 100;
     } else if (fps <= 130) {
-      game.vars._fps.rate = 120;
+      game.vars._info.rate = 120;
     } else if (fps <= 154) {
-      game.vars._fps.rate = 144;
+      game.vars._info.rate = 144;
     } else {
-      game.vars._fps.rate = game.vars._fps.fps;
+      game.vars._info.rate = game.vars._info.fps;
     }
     game.helpers.load('main');
   }
