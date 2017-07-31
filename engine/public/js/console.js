@@ -31,18 +31,39 @@ function consoleHandler(key) {
         action() {},
         man: `Clear the console log.`
       },
+      godmode: {
+        action() {
+          game.local.godmode = !game.local.godmode;
+          result = game.local.godmode;
+        },
+        man: `Enables god mode (noclip).`
+      },
       help: {
         action() {
           result = Object.keys(commands);
         },
         man: `Shows available commands.`
       },
-      hidefps: {
+      hideinfo: {
         action() {
-            game.vars._fps.showFPS = false;
+            game.vars._info.showInfo = false;
             result = "true";
         },
-        man: `Hides current framerate.`
+        man: `Hides info.`
+      },
+      hidecovers: {
+        action() {
+          game.local.showCovers = false;
+          result = "false";
+        },
+        man: `Hides covers`
+      },
+      hidesolids: {
+        action() {
+          game.local.showSolids = false;
+          result = "false";
+        },
+        man: `Hides solids`
       },
       info: {
         action() {
@@ -83,12 +104,33 @@ function consoleHandler(key) {
         },
         man: `Force game into specified mode. Accepts mobile/1, desktop/2, or any other value for automatic detection (default).`
       },
-      showfps: {
+      opacity: {
         action() {
-            game.vars._fps.showFPS = true;
-            result = "true";
+          game.local.mapOpacity = Number((command[1] || 1));
+          result = Number((command[1] || 1));
         },
-        man: `Shows current framerate.`
+        man: `Set map render opacity`
+      },
+      showinfo: {
+        action() {
+          game.vars._info.showInfo = true;
+          result = "true";
+        },
+        man: `Shows info.`
+      },
+      showcovers: {
+        action() {
+          game.local.showCovers = true;
+          result = "true";
+        },
+        man: `Shows covers`
+      },
+      showsolids: {
+        action() {
+          game.local.showSolids = true;
+          result = "true";
+        },
+        man: `Shows solids`
       },
       refresh: {
         action() {
@@ -107,6 +149,7 @@ function consoleHandler(key) {
             } else {
               game.helpers.load(game.vars._script);
             }
+            game.vars._console.display = false;
           }, 100);
           result = "Reloading scene...";
         },
@@ -132,6 +175,22 @@ function consoleHandler(key) {
           result = "Reloading assets";
         },
         man: `Reload game assets and then reload scene.`
+      },
+      reflection: {
+        action() {
+          let mode = Number((command[1] || 0));
+          if (mode === 1) {
+            game.local.reflection = true;
+            game.local.reflectionWaver = false;
+          } else if (mode === 2) {
+            game.local.reflection = true;
+            game.local.reflectionWaver = true;
+          } else {
+            game.local.reflection = false;
+          }
+          result = mode;
+        },
+        man: `Enable reflections`
       }
     };
 
