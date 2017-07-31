@@ -22,6 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/scenes', express.static(path.join(__dirname, '..', 'scenes')));
+app.use('/maps', express.static(path.join(__dirname, '..', 'maps')));
 app.use('/img', express.static(path.join(__dirname, '..', 'assets/images')));
 app.use('/sprites', express.static(path.join(__dirname, '..', 'assets/sprites')));
 app.use('/animations', express.static(path.join(__dirname, '..', 'assets/animations')));
