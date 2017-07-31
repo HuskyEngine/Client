@@ -67,6 +67,7 @@ game.helpers.mobileCheck = function() {
 };
 
 game.helpers.load = (name, args={}) => {
+  window.cancelAnimationFrame(game.renderLoop);
   // Reset logic and render ready status while loading new scene
   game.logicReady  = false;
   game.renderReady = false;
@@ -411,7 +412,7 @@ game.helpers.loadAssets = (done=undefined) => {
         images     = raw.images;
         sprites    = raw.sprites;
         animations = raw.animations;
-        game.local.total = images.length + sprites.length + animations.length;
+        game.local.totalFiles = images.length + sprites.length + animations.length;
         cb();
       });
     },
@@ -429,7 +430,7 @@ game.helpers.loadAssets = (done=undefined) => {
       async.eachLimit(images, 10, (file, loaded) => {
         game.helpers.loadImg(file, file, () => {
           game.local.fileName = file;
-          game.local.current++;
+          game.local.filesLoaded++;
           loaded();
         });
       }, cb);
@@ -440,7 +441,7 @@ game.helpers.loadAssets = (done=undefined) => {
       async.eachLimit(sprites, 10, (file, loaded) => {
         game.helpers.loadSprite(file, file, () => {
           game.local.fileName = file;
-          game.local.current++;
+          game.local.filesLoaded++;
           loaded();
         });
       }, cb);
@@ -451,7 +452,7 @@ game.helpers.loadAssets = (done=undefined) => {
       async.eachLimit(animations, 10, (file, loaded) => {
         game.helpers.loadAnimation(file, file, () => {
           game.local.fileName = file;
-          game.local.current++;
+          game.local.filesLoaded++;
           loaded();
         });
       }, cb);
@@ -459,10 +460,123 @@ game.helpers.loadAssets = (done=undefined) => {
 
   // Finish init
   ], () => {
-    game.helpers.setTimeout(() => {
-      game.local.fileName = "";
-    }, 1000);
-    game.local.loaded = true;
     if (done !== undefined) done();
   });
+};
+
+game.helpers.loadMap = (map) => {
+  game.map.name = map;
+  $.get(`maps/${map}.json`)
+  .done((data) => {
+    game.map.src = data;
+    game.map.grid = game.helpers.gridify();
+    game.helpers.generateQuadrants(() => {
+      game.local.loaded = true;
+      console.log('done?');
+    });
+  })
+  .fail((data) => {
+    console.log('failure');
+  });
+};
+
+// Generates quadrant matrix to write map src to
+game.helpers.gridify = () => {
+  let tilesize = game.settings.tilesize;
+  let quadsize = game.settings.quadrantsize;
+  let multiplier = game.settings.multiplier;
+  let tilesper = quadsize / (tilesize * multiplier);
+
+  // Get dimensions of map source
+  let width = game.map.src[0].length;
+  let height = game.map.src.length;
+
+  // Calculate how many matrices we will have
+  let widthGrids = Math.ceil(width/tilesper);
+  let heightGrids = Math.ceil(height/tilesper);
+  let grids = [];
+
+  // Calculate the areas of the matrix to slice
+  for (let i = 0; i < widthGrids; i++) {
+    grids[i] = [];
+
+    for (let j = 0; j < heightGrids; j++) {
+      grids[i][j] = [[j*tilesper, i*tilesper], [(j+1)*tilesper, (i+1)*tilesper]];
+    }
+  }
+
+  // Actually slice using calculations from above loop
+  let sections = [];
+  for (let i = 0; i < grids.length; i++) {
+    sections[i] = [];
+
+    for (let j = 0; j < grids[0].length; j++) {
+      // Make a quadrant from 0,0 to widthGrids,heightGrids
+      sections[i][j] = game.map.src.slice(grids[i][j][0][0], grids[i][j][1][0]).map((grid) => grid.slice(grids[i][j][0][1], grids[i][j][1][1]));
+    }
+  }
+
+  return sections;
+};
+
+game.helpers.generateQuadrants = (done) => {
+  let tilesize = game.settings.tilesize;
+  let quadsize = game.settings.quadrantsize;
+  let multiplier = game.settings.multiplier;
+  let tilesper = quadsize / (tilesize * multiplier);
+
+  for (let i = 0; i < game.map.grid.length; i++) {
+    game.map.quadrants[i] = [];
+    for (let j = 0; j < game.map.grid[0].length; j++) {
+
+      // Create new Canvas offscreen
+      game.map.quadrants[i][j] = document.createElement("canvas");
+      game.map.quadrants[i][j].width = game.settings.quadrantsize
+      game.map.quadrants[i][j].height = game.settings.quadrantsize
+      game.map.quadrants[i][j].style.width = game.settings.quadrantsize + "px"
+      game.map.quadrants[i][j].style.height = game.settings.quadrantsize + "px"
+      var gridContext = game.map.quadrants[i][j].getContext('2d');
+      gridContext.imageSmoothingEnabled = false;
+
+      let slice = game.map.grid[i][j];
+      for (let k = 0; k < slice.length; k++) {
+        for (let l = 0; l < slice[0].length; l++) {
+          let tile = slice[k][l]
+          if ([421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) === -1) {
+            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*64, k*64, 64, 64);
+            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*64, k*64, 64, 64);
+          } else {
+            game.map.reflections.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile});
+          }
+
+          if (game.map.coverTiles.indexOf(tile[1]) !== -1) {
+            game.map.cover.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile[1]});
+          }
+        }
+      }
+      if (i === game.map.grid.length-1 && j === game.map.grid.length-1) {
+        done();
+      }
+    }
+  }
+}
+
+game.helpers.getPos = () => {
+  let x = (-game.local.x+17 || "-");
+  let y = (-game.local.y+10 || "-");
+  let dir = (game.local.dirs && game.local.dir) ? game.local.dirs[game.local.dir] : "";
+
+  let xquad = Math.ceil((x * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize);
+  let yquad = Math.ceil((y * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize)
+  return {
+    x,
+    y,
+    dir,
+    quad: [
+      xquad,
+      yquad,
+      x - (xquad-1)*(game.settings.quadrantsize/(game.settings.tilesize*game.settings.multiplier)),
+      y - (yquad-1)*(game.settings.quadrantsize/(game.settings.tilesize*game.settings.multiplier))
+    ]
+  };
 };

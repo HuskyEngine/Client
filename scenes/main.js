@@ -1,5 +1,6 @@
 // Init script
 game.scripts.init = (cb) => {
+  game.helpers.load('examples/game');
   cb();
 };
 
