@@ -266,8 +266,7 @@ function consoleDisplay() {
       text(game.vars._console.match, "24pt Arial", game.canvas.ctx.measureText(content).width, 30+(30*linenum));
       fillStyle('white');
     }
-    //game.vars._console.match
-    //(game.vars._console.blink ? "|" : "")
+
     game.vars._console.log.forEach((line) => {
       text(line, "24pt Arial", 0, 30+(30*++linenum));
     });
