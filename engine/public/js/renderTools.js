@@ -209,11 +209,14 @@ function drawSpriteReflection(spriteInfo, dx, dy, width=null, height=null, canva
     canvas = width;
   }
 
-  let aheight  = animation.height/3;
-  let aheight2 = (height*4)/3
-  canvas.drawImage(sprite, animation.x + ((spriteInfo[3]-1) * animation.width), animation.y,           animation.width, aheight, dx+game.vars.rand1, dy,            width*4, aheight2);
-  canvas.drawImage(sprite, animation.x + ((spriteInfo[3]-1) * animation.width), animation.y+aheight,   animation.width, aheight, dx+game.vars.rand2, dy+aheight2,   width*4, aheight2);
-  canvas.drawImage(sprite, animation.x + ((spriteInfo[3]-1) * animation.width), animation.y+aheight*2, animation.width, aheight, dx+game.vars.rand3, dy+aheight2*2, width*4, aheight2);
+  let parts = 5;
+
+  let aheight  = animation.height/parts;
+  let aheight2 = (height*4)/parts;
+
+  for (let i = 0; i < parts; i++) {
+    canvas.drawImage(sprite, animation.x + ((spriteInfo[3]-1) * animation.width), animation.y+aheight*i, animation.width, aheight, dx+game.vars['rand' + i], dy+aheight2*i, width*4, aheight2);
+  }
 }
 
 function alpha(val=undefined, canvas=game.canvas.ctx) {

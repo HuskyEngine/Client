@@ -236,16 +236,16 @@ game.helpers.loadAnimation = (name, path, cb) => {
 };
 
 game.helpers.loadSound = (name, path, cb) => {
-  game.assets.audio[name] = new buzz.sound("audio/" + path);
-  game.assets.audio[name].bind("loadstart", () => {
+  game.assets.sounds[name] = new buzz.sound("sounds/" + path);
+  game.assets.sounds[name].bind("loadstart", () => {
     cb()
   });
 
-  game.assets.audio[name].bind("playing", () => {
+  game.assets.sounds[name].bind("playing", () => {
 
   });
 
-  game.assets.audio[name].bind("ended", () => {
+  game.assets.sounds[name].bind("ended", () => {
 
   });
 };

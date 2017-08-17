@@ -1,11 +1,17 @@
-// Game namescape object
+const MAX_FPS    = 0;
+let interval     = 1000/MAX_FPS;
+let lastTime     = Date.now();
+let currentTime  = 0;
+let delta        = 0;
+
+// Game namespace object
 let game = {
 
   // Hold all game assets
   assets: {
     animations: {},
     sprites:    {},
-    audio:      {},
+    sounds:     {},
     images:     {}
   },
 
@@ -29,7 +35,7 @@ let game = {
     held:  {}
   },
 
-  // Main game canvas
+  // Main canvas
   canvas: {
     ctx:     null,
     element: null,
@@ -55,6 +61,44 @@ let game = {
   intervals:   [],
   timeouts:    [],
 
+  // Hold canvas layers
+  layers: {
+    game: {
+      ctx:     null,
+      element: null,
+
+      // Determine scale for buttons and UI elements
+      mult: {
+        width:  1,
+        height: 1
+      },
+      rect:    null,
+      width:   0,
+      height:  0,
+
+      // Real width/height of canvas
+      rwidth:  0,
+      rheight: 0
+    },
+    ui:   {
+      ctx:     null,
+      element: null,
+
+      // Determine scale for buttons and UI elements
+      mult: {
+        width:  1,
+        height: 1
+      },
+      rect:    null,
+      width:   0,
+      height:  0,
+
+      // Real width/height of canvas
+      rwidth:  0,
+      rheight: 0
+    }
+  },
+
   // Holds arguments passed into currently loaded scene
   loadArgs:    {},
 
@@ -64,7 +108,6 @@ let game = {
   logicReady:  false,
 
   // Map data
-
   map: {
     name: null,
     src:  null,
@@ -79,6 +122,9 @@ let game = {
   renderFrame: 0,
   renderLoop:  null,
   renderReady: false,
+
+  // Hold all canvases that are to be saved and reused
+  scopes: {},
 
   // Hold all of the scripts passed in by loadedscene
   scripts: {
@@ -104,16 +150,18 @@ let game = {
       render: 0,
       rate: 0,
       fps: 0,
+      tmpFrame: 0,
       simLastCalled: Date.now(),
       renderLastCalled: Date.now(),
+      lastFrameCalled: Date.now(),
       lastCalled: Date.now(),
+      lastFrameCount: 0,
       tilePreviewBG: document.createElement("canvas"),
       tilePreviewFG: document.createElement("canvas"),
       tilePreviewCombo: document.createElement("canvas")
     },
 
     _console: {
-      blink: false,
       content: "",
       enabled: true,
       display: false,
@@ -162,6 +210,7 @@ $.get('config', (data) => {
 });
 
 $(() => {
+  //$("#canvas").attr({height: game.canvas.rheight, width: game.canvas.rwidth});
   // Remove 300ms delay on mobile devices
   FastClick.attach(document.body);
 
@@ -235,85 +284,98 @@ function render() {
   game.vars._info.renderLastCalled = Date.now();
   if (!game.renderReady) return;
 
-  // Calculate FPS
-  if (game.renderFrame % 60 === 0) {
-    game.vars._info.fps = (60*1000)/(Date.now() - game.vars._info.lastCalled);
-    game.vars._info.lastCalled = Date.now();
-  }
-
   // Pass in current frame for timing logic
-  game.scripts.render(++game.renderFrame);
   game.renderLoop = requestAnimationFrame(render);
+  currentTime = Date.now();
+  delta = (currentTime-lastTime);
 
-  // Display FPS
-  if (game.vars._info.showInfo) {
-    let oldAlpha = alpha();
-    let oldFill  = fillStyle();
-    
-    alpha(.6);
-    fillStyle('black');
-    game.canvas.ctx.fillRect(0, 0, 750, 250);
-    fillStyle('white');
-    alpha(1);
+  if ((MAX_FPS !== 0 && delta > interval) || MAX_FPS === 0) nextFrame();
 
-    // vars
-    let fps  = game.vars._info.fps.toFixed(1);
-    let sim  = game.vars._info.sim;
-    let ren  = game.vars._info.render;
-
-    if (fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange');
-    if (fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red');
-    text("fps:  " + fps, "24pt Arial", 0, 30);
-    fillStyle('white');
-
-    if (sim > 1000/game.vars._info.rate) fillStyle('red');
-    text("sim: " + sim + " ms", "24pt Arial", 0, 60);
-    fillStyle('white');
-
-    if (ren > 1000/game.vars._info.rate) fillStyle('red');
-    text("ren: " + ren + " ms", "24pt Arial", 0, 90);
-    fillStyle('white');
-
-    let pos  = game.helpers.getPos();
-
-    if (pos.x > 0 && pos.y > 0 && pos.x <= game.map.src.length && pos.y <= game.map.src[0].length) {
-      let feet = (game.map !== undefined && pos.x !== "-") ? JSON.stringify(game.map.src[pos.y-1][pos.x-1]) : "[null, null]";
-
-      text("pos: [" + pos.x + "," + pos.y + "] [" + pos.dir + "]", "24pt Arial", 0, 120);
-      text("feet: " + feet, "24pt Arial", 0, 150);
-
-      if (game.map.quadrants.length !== 0) {
-        let pos = game.helpers.getPos();
-        let xquad = pos.quad[0];
-        let yquad = pos.quad[1];
-        text("quads: " + game.map.quadrants[0].length * game.map.quadrants.length + " @ " + game.settings.quadrantsize + "px x " + game.settings.quadrantsize + "px (multiplier: " + game.settings.multiplier + ", tilesize: " + game.settings.tilesize + ")", "24pt Arial", 0, 180);
-        text("curquad: [" + xquad + "," + yquad + "] [" + pos.quad[2] + "," + pos.quad[3] + "]", "24pt Arial", 0, 210);
-      }
-
-      // Tile preview
-      game.vars._info.tilePreviewBG.ctx.clearRect(0, 0, 32, 32)
-      game.vars._info.tilePreviewBG.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 16, 16);
-
-      game.vars._info.tilePreviewFG.ctx.clearRect(0, 0, 32, 32)
-      game.vars._info.tilePreviewFG.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 0, 0, 16, 16);
-
-      game.vars._info.tilePreviewCombo.ctx.clearRect(0, 0, 32, 32)
-      game.vars._info.tilePreviewCombo.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 16, 16);
-      game.vars._info.tilePreviewCombo.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 0, 0, 16, 16);
-
-      game.canvas.ctx.drawImage(game.vars._info.tilePreviewBG, 190, 125, 32, 32);
-      game.canvas.ctx.drawImage(game.vars._info.tilePreviewFG, 230, 125, 32, 32);
-      game.canvas.ctx.drawImage(game.vars._info.tilePreviewCombo, 270, 125, 32, 32);
+  function nextFrame() {
+    // Calculate FPS
+    if (Date.now() - game.vars._info.lastCalled >= 1000) {
+      game.vars._info.fps = game.vars._info.tmpFrame;
+      if (game.vars._info.fps <= 0) game.vars._info.fps = 0;
+      game.vars._info.tmpFrame = 0;
+      game.vars._info.lastCalled = Date.now();
     }
 
-    fillStyle(oldFill);
-    alpha(oldAlpha);
+    game.scripts.render(++game.renderFrame);
+    game.vars._info.tmpFrame++;
+
+    // Display FPS
+    if (game.vars._info.showInfo) {
+      let oldAlpha = alpha();
+      let oldFill  = fillStyle();
+
+      alpha(.6);
+      fillStyle('black');
+      game.canvas.ctx.fillRect(0, 0, 750, 250);
+      fillStyle('white');
+      alpha(1);
+
+      // vars
+      let fps  = game.vars._info.fps.toFixed(1);
+      let sim  = game.vars._info.sim;
+      let ren  = game.vars._info.render;
+
+      if (fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange');
+      if (fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red');
+      text("fps:  " + fps, "24pt Arial", 0, 30);
+      fillStyle('white');
+
+      if (sim > 1000/game.vars._info.rate) fillStyle('red');
+      text("sim: " + sim + " ms", "24pt Arial", 0, 60);
+      fillStyle('white');
+
+      if (ren > 1000/game.vars._info.rate) fillStyle('red');
+      text("ren: " + ren + " ms", "24pt Arial", 0, 90);
+      fillStyle('white');
+
+      let pos  = game.helpers.getPos();
+
+      if (pos.x > 0 && pos.y > 0 && pos.x <= game.map.src.length && pos.y <= game.map.src[0].length) {
+        let feet = (game.map !== undefined && pos.x !== "-") ? JSON.stringify(game.map.src[pos.y-1][pos.x-1]) : "[null, null]";
+
+        text("pos: [" + pos.x + "," + pos.y + "] [" + pos.dir + "]", "24pt Arial", 0, 120);
+        text("feet: " + feet, "24pt Arial", 0, 150);
+
+        if (game.map.quadrants.length !== 0) {
+          let pos = game.helpers.getPos();
+          let xquad = pos.quad[0];
+          let yquad = pos.quad[1];
+          text("quads: " + game.map.quadrants[0].length * game.map.quadrants.length + " @ " + game.settings.quadrantsize + "px x " + game.settings.quadrantsize + "px (multiplier: " + game.settings.multiplier + ", tilesize: " + game.settings.tilesize + ")", "24pt Arial", 0, 180);
+          text("curquad: [" + xquad + "," + yquad + "] [" + pos.quad[2] + "," + pos.quad[3] + "]", "24pt Arial", 0, 210);
+        }
+
+        // Tile preview
+        game.vars._info.tilePreviewBG.ctx.clearRect(0, 0, 32, 32)
+        game.vars._info.tilePreviewBG.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 16, 16);
+
+        game.vars._info.tilePreviewFG.ctx.clearRect(0, 0, 32, 32)
+        game.vars._info.tilePreviewFG.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 0, 0, 16, 16);
+
+        game.vars._info.tilePreviewCombo.ctx.clearRect(0, 0, 32, 32)
+        game.vars._info.tilePreviewCombo.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 16, 16);
+        game.vars._info.tilePreviewCombo.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 0, 0, 16, 16);
+
+        game.canvas.ctx.drawImage(game.vars._info.tilePreviewBG, 190, 125, 32, 32);
+        game.canvas.ctx.drawImage(game.vars._info.tilePreviewFG, 230, 125, 32, 32);
+        game.canvas.ctx.drawImage(game.vars._info.tilePreviewCombo, 270, 125, 32, 32);
+      }
+
+      fillStyle(oldFill);
+      alpha(oldAlpha);
+    }
+
+    lastTime = currentTime - (delta % interval);
+
+    // Display Console
+    consoleDisplay();
+
+    game.vars._info.lastFrameCalled = Date.now();
+    game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
   }
-
-  // Display Console
-  consoleDisplay();
-
-  game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
 }
 
 game.logicLoop = setInterval(() => {
@@ -377,16 +439,18 @@ game.logicLoop = setInterval(() => {
   // Pass in logic frame for timing
   game.scripts.logic(++game.logicFrame);
 
-  game.vars._console.blink = (Date.now()/100) % 10 > 5;
-
   game.vars._reflectionStep++;
 
   if (game.vars._reflectionStep % 30 === 0) {
-    game.vars.rand1 = getRandomIntInclusive(-2,2);
+    game.vars.rand0 = getRandomIntInclusive(-2,2);
+  } else if (game.vars._reflectionStep % 30 === 5) {
+    game.vars.rand3 = getRandomIntInclusive(-2,2);
   } else if (game.vars._reflectionStep % 30 === 10) {
     game.vars.rand2 = getRandomIntInclusive(-2,2);
+  } else if (game.vars._reflectionStep % 30 === 15) {
+    game.vars.rand4 = getRandomIntInclusive(-2,2);
   } else if (game.vars._reflectionStep % 30 === 20) {
-    game.vars.rand3 = getRandomIntInclusive(-2,2);
+    game.vars.rand1 = getRandomIntInclusive(-2,2);
   }
 
   game.vars._info.sim = Date.now() - game.vars._info.simLastCalled;
