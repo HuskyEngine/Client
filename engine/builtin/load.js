@@ -71,6 +71,62 @@ game.scripts.logic = (frame) => {
       game.helpers.loadMap('default');
     });
   }
+
+  if (frame > 1) {
+    // Everything loaded, so fade away and load main
+    if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > 2000) {
+      game.local.fadeAway -= .01;
+      if (game.local.fadeAway < 0) {
+        game.local.fadeAway = 0;
+        game.local.loadMain = true;
+      }
+      alpha(game.local.fadeAway);
+    }
+    if (game.local.loadMain) {
+      let fps = game.vars._info.fps;
+      if (fps <= 70) {
+        game.vars._info.rate = 60;
+      } else if (fps <= 95) {
+        game.vars._info.rate = 85;
+      } else if (fps <= 110) {
+        game.vars._info.rate = 100;
+      } else if (fps <= 130) {
+        game.vars._info.rate = 120;
+      } else if (fps <= 154) {
+        game.vars._info.rate = 144;
+      } else {
+        game.vars._info.rate = game.vars._info.fps;
+      }
+      game.helpers.load('main');
+    }
+    if (Date.now() - game.local.loadedTime < 1500) {
+      if (game.local.poweredByFont < 10) game.local.poweredByFont += .5;
+      else if (game.local.poweredByFont < 20) game.local.poweredByFont += .4;
+      else if (game.local.poweredByFont < 30) game.local.poweredByFont += .3;
+      else if (game.local.poweredByFont < 40) game.local.poweredByFont += .2;
+      else if (game.local.poweredByFont < 50) game.local.poweredByFont += .1;
+    }
+    if (Date.now() - game.local.loadedTime < 1500) {
+      game.local.poweredByAlpha += .01;
+      alpha(1);
+    }
+    if (Date.now() - game.local.loadedTime < 1500) {
+      game.local.huskyAlpha += .01;
+      game.local.huskySize += 3;
+      alpha(1);
+    }
+    if (Date.now() - game.local.loadedTime < 1500) {
+      if (game.local.engineFont < 10) game.local.engineFont += .5;
+      else if (game.local.engineFont < 20) game.local.engineFont += .4;
+      else if (game.local.engineFont < 30) game.local.engineFont += .3;
+      else if (game.local.engineFont < 40) game.local.engineFont += .2;
+      else if (game.local.engineFont < 50) game.local.engineFont += .1;
+    }
+    if (Date.now() - game.local.loadedTime < 1500) {
+      game.local.engineAlpha += .01;
+      alpha(1);
+    }
+  }
 };
 
 
@@ -79,16 +135,7 @@ game.scripts.render = (frame) => {
   if (!game.local.huskyLoaded) return;
   game.animations.clear();
 
-  // Everything loaded, so fade away and load main
-  if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > 2000) {
-    game.local.fadeAway -= .01;
-    if (game.local.fadeAway < 0) {
-      game.local.fadeAway = 0;
-      game.local.loadMain = true;
-    }
-    alpha(game.local.fadeAway);
-  }
-
+  alpha(game.local.fadeAway);
   text(game.local.fileName, "16pt Arial", "center", 950);
 
   let prev = fillStyle();
@@ -104,66 +151,18 @@ game.scripts.render = (frame) => {
 
   text(game.local.filesLoaded + " / " + game.local.totalFiles, "16pt Arial", "center", 1050);
 
-  if (game.local.loadMain) {
-    let fps = game.vars._info.fps;
-    if (fps <= 70) {
-      game.vars._info.rate = 60;
-    } else if (fps <= 95) {
-      game.vars._info.rate = 85;
-    } else if (fps <= 110) {
-      game.vars._info.rate = 100;
-    } else if (fps <= 130) {
-      game.vars._info.rate = 120;
-    } else if (fps <= 154) {
-      game.vars._info.rate = 144;
-    } else {
-      game.vars._info.rate = game.vars._info.fps;
-    }
-    game.helpers.load('main');
-  }
-
   // Powered By
   alpha(game.local.poweredByAlpha);
   alpha(game.local.fadeAway);
-  if (Date.now() - game.local.loadedTime < 1500) {
-    if (game.local.poweredByFont < 10) game.local.poweredByFont += .5;
-    else if (game.local.poweredByFont < 20) game.local.poweredByFont += .4;
-    else if (game.local.poweredByFont < 30) game.local.poweredByFont += .3;
-    else if (game.local.poweredByFont < 40) game.local.poweredByFont += .2;
-    else if (game.local.poweredByFont < 50) game.local.poweredByFont += .1;
-  }
-
   text("Powered By", game.local.poweredByFont + "pt Arial", "center", 365-((game.local.huskySize/4)*1.25));
-
-  if (Date.now() - game.local.loadedTime < 1500) {
-    game.local.poweredByAlpha += .01;
-    alpha(1);
-  }
 
   alpha(game.local.huskyAlpha);
   alpha(game.local.fadeAway);
   drawImage('huskyengine', game.canvas.rwidth/2-(game.local.huskySize/2), game.canvas.rheight/2-(game.local.huskySize/2)-200+(game.local.huskySize/4), game.local.huskySize, game.local.huskySize);
 
-  if (Date.now() - game.local.loadedTime < 1500) {
-    game.local.huskyAlpha += .01;
-    game.local.huskySize += 3;
-    alpha(1);
-  }
-
   alpha(game.local.engineAlpha);
   alpha(game.local.fadeAway);
-  if (Date.now() - game.local.loadedTime < 1500) {
-    if (game.local.engineFont < 10) game.local.engineFont += .5;
-    else if (game.local.engineFont < 20) game.local.engineFont += .4;
-    else if (game.local.engineFont < 30) game.local.engineFont += .3;
-    else if (game.local.engineFont < 40) game.local.engineFont += .2;
-    else if (game.local.engineFont < 50) game.local.engineFont += .1;
-  }
 
   text("Husky Engine", game.local.engineFont + "pt Arial", "center", 410+((game.local.huskySize/2)*1.6));
 
-  if (Date.now() - game.local.loadedTime < 1500) {
-    game.local.engineAlpha += .01;
-    alpha(1);
-  }
 };
