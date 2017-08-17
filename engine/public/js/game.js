@@ -156,9 +156,7 @@ let game = {
       lastFrameCalled: Date.now(),
       lastCalled: Date.now(),
       lastFrameCount: 0,
-      tilePreviewBG: document.createElement("canvas"),
-      tilePreviewFG: document.createElement("canvas"),
-      tilePreviewCombo: document.createElement("canvas")
+      tilePreview: document.createElement("canvas")
     },
 
     _console: {
@@ -187,23 +185,13 @@ $.get('config', (data) => {
   game.settings.tilesize = data.tilesize;
   game.settings.quadrantsize = data.quadrantsize;
 
-  game.vars._info.tilePreviewBG.width = data.tilesize;
-  game.vars._info.tilePreviewBG.height = data.tilesize;
-  game.vars._info.tilePreviewBG.style.width = data.tilesize + "px";
-  game.vars._info.tilePreviewBG.style.height = data.tilesize + "px";
-  game.vars._info.tilePreviewBG.ctx = game.vars._info.tilePreviewBG.getContext('2d');
+  game.vars._info.tilePreview.width = 112;
+  game.vars._info.tilePreview.height = data.tilesize;
+  game.vars._info.tilePreview.style.width = 112 + "px";
+  game.vars._info.tilePreview.style.height = data.tilesize + "px";
+  game.vars._info.tilePreview.ctx = game.vars._info.tilePreview.getContext('2d');
 
-  game.vars._info.tilePreviewFG.width = data.tilesize;
-  game.vars._info.tilePreviewFG.height = data.tilesize;
-  game.vars._info.tilePreviewFG.style.width = data.tilesize + "px";
-  game.vars._info.tilePreviewFG.style.height = data.tilesize + "px";
-  game.vars._info.tilePreviewFG.ctx = game.vars._info.tilePreviewFG.getContext('2d');
-
-  game.vars._info.tilePreviewCombo.width = data.tilesize;
-  game.vars._info.tilePreviewCombo.height = data.tilesize;
-  game.vars._info.tilePreviewCombo.style.width = data.tilesize + "px";
-  game.vars._info.tilePreviewCombo.style.height = data.tilesize + "px";
-  game.vars._info.tilePreviewCombo.ctx = game.vars._info.tilePreviewCombo.getContext('2d');
+  game.vars._info.tilePreview.ctx.imageSmoothingEnabled   = false;
 
   game.canvas.rwidth  = 512 * game.settings.multiplier;
   game.canvas.rheight = 288 * game.settings.multiplier;
@@ -223,8 +211,19 @@ $(() => {
   game.canvas.ctx     = game.canvas.element.getContext('2d');
   game.canvas.rect    = game.canvas.element.getBoundingClientRect();
 
+  // Set up game and ui layers
+  game.layers.game.element = document.createElement("canvas");
+  game.layers.game.ctx     = game.layers.game.element.getContext('2d');
+  game.layers.game.rect    = game.layers.game.element.getBoundingClientRect();
+
+  game.layers.ui.element = document.createElement("canvas");
+  game.layers.ui.ctx     = game.layers.ui.element.getContext('2d');
+  game.layers.ui.rect    = game.layers.ui.element.getBoundingClientRect();
+
   // Keep things pixelated
-  game.canvas.ctx.imageSmoothingEnabled = false;
+  game.canvas.ctx.imageSmoothingEnabled      = false;
+  game.layers.game.ctx.imageSmoothingEnabled = false;
+  game.layers.ui.ctx.imageSmoothingEnabled   = false;
 
   // TODO: Need a work around for Android
   // Check to see if application is "installed" (only iOS, doesn't work on Android)
@@ -349,19 +348,13 @@ function render() {
         }
 
         // Tile preview
-        game.vars._info.tilePreviewBG.ctx.clearRect(0, 0, 32, 32)
-        game.vars._info.tilePreviewBG.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 16, 16);
+        game.vars._info.tilePreview.ctx.clearRect(0, 0, 112, 32)
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 40, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 80, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 80, 0, 32, 16);
 
-        game.vars._info.tilePreviewFG.ctx.clearRect(0, 0, 32, 32)
-        game.vars._info.tilePreviewFG.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 0, 0, 16, 16);
-
-        game.vars._info.tilePreviewCombo.ctx.clearRect(0, 0, 32, 32)
-        game.vars._info.tilePreviewCombo.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 16, 16);
-        game.vars._info.tilePreviewCombo.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 0, 0, 16, 16);
-
-        game.canvas.ctx.drawImage(game.vars._info.tilePreviewBG, 190, 125, 32, 32);
-        game.canvas.ctx.drawImage(game.vars._info.tilePreviewFG, 230, 125, 32, 32);
-        game.canvas.ctx.drawImage(game.vars._info.tilePreviewCombo, 270, 125, 32, 32);
+        game.canvas.ctx.drawImage(game.vars._info.tilePreview, 190, 125, 112, 32);
       }
 
       fillStyle(oldFill);
