@@ -54,6 +54,8 @@ game.helpers.resize = function() {
     $('#canvas').show();
     $('#landscape').hide();
   }
+
+  //L_UI.scale(window.innerWidth/2048)
 };
 
 game.helpers.mobileCheck = function() {
@@ -464,15 +466,24 @@ game.helpers.loadAssets = (done=undefined) => {
   });
 };
 
-game.helpers.loadMap = (map) => {
+game.helpers.loadMap = (map, cb=()=>{}) => {
+  delete game.map;
+  game.map = {
+    name: null,
+    src:  null,
+    grid: [],
+    quadrants: [],
+    reflections: [],
+    cover: [],
+    coverTiles: [625, 577, 593, 609, 608, 592, 533, 560, 561, 570, 571, 586, 587, 568, 569, 584, 585, 864, 865, 866, 867, 868, 644, 645, 646, 647, 725, 726, 727, 720, 721, 722, 723, 724, 656, 657, 658, 659, 1272, 1273, 1274, 1275, 1276]
+  };
   game.map.name = map;
   $.get(`maps/${map}.json`)
   .done((data) => {
     game.map.src = data;
     game.map.grid = game.helpers.gridify();
     game.helpers.generateQuadrants(() => {
-      game.local.loaded = true;
-      console.log('done?');
+      cb();
     });
   })
   .fail((data) => {
@@ -482,10 +493,10 @@ game.helpers.loadMap = (map) => {
 
 // Generates quadrant matrix to write map src to
 game.helpers.gridify = () => {
-  let tilesize = game.settings.tilesize;
-  let quadsize = game.settings.quadrantsize;
-  let multiplier = game.settings.multiplier;
-  let tilesper = quadsize / (tilesize * multiplier);
+  let tilesize = 16
+  let quadsize = 1024;
+  let multiplier = 4;
+  let tilesper = 16;
 
   // Get dimensions of map source
   let width = game.map.src[0].length;
@@ -520,10 +531,10 @@ game.helpers.gridify = () => {
 };
 
 game.helpers.generateQuadrants = (done) => {
-  let tilesize = game.settings.tilesize;
-  let quadsize = game.settings.quadrantsize;
-  let multiplier = game.settings.multiplier;
-  let tilesper = quadsize / (tilesize * multiplier);
+  let tilesize = 16;
+  let quadsize = 256 * L_GAME.scale();
+  let multiplier = 4;
+  let tilesper = 16;
 
   for (let i = 0; i < game.map.grid.length; i++) {
     game.map.quadrants[i] = [];
@@ -543,8 +554,8 @@ game.helpers.generateQuadrants = (done) => {
         for (let l = 0; l < slice[0].length; l++) {
           let tile = slice[k][l]
           if ([421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) === -1) {
-            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*64, k*64, 64, 64);
-            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*64, k*64, 64, 64);
+            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*16*L_GAME.scale(), k*16*L_GAME.scale(), 16*L_GAME.scale(), 16*L_GAME.scale());
+            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*16*L_GAME.scale(), k*16*L_GAME.scale(), 16*L_GAME.scale(), 16*L_GAME.scale());
           } else {
             game.map.reflections.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile});
           }
@@ -562,8 +573,8 @@ game.helpers.generateQuadrants = (done) => {
 }
 
 game.helpers.getPos = () => {
-  let x = (-game.local.x+17 || "-");
-  let y = (-game.local.y+10 || "-");
+  let x = (-game.local.x+17 || 0);
+  let y = (-game.local.y+10 || 0);
   let dir = (game.local.dirs && game.local.dir) ? game.local.dirs[game.local.dir] : "";
 
   let xquad = Math.ceil((x * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize);

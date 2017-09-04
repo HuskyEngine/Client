@@ -1,8 +1,7 @@
-const MAX_FPS    = 0;
-let interval     = 1000/MAX_FPS;
-let lastTime     = Date.now();
-let currentTime  = 0;
-let delta        = 0;
+const MAX_FPS = 0;
+let L_MAIN;
+let L_GAME;
+let L_UI;
 
 // Game namespace object
 let game = {
@@ -48,6 +47,22 @@ let game = {
     rect:    null,
     width:   0,
     height:  0,
+    _scale:   1,
+    scale(val) {
+      if (val === undefined) return this._scale;
+      else {
+        // Save original vals
+        if (this.element._height === undefined) {
+          this.element._height = this.element.height;
+          this.element._width = this.element.width;
+        }
+        this._scale = val;
+        this.element.height = this.element._height * this._scale;
+        this.element.width  = this.element._width * this._scale;
+        this.ctx.imageSmoothingEnabled = false;
+        return this._scale;
+      }
+    },
 
     // Real width/height of canvas
     rwidth:  0,
@@ -75,10 +90,23 @@ let game = {
       rect:    null,
       width:   0,
       height:  0,
-
-      // Real width/height of canvas
-      rwidth:  0,
-      rheight: 0
+      _scale:   1,
+      scale(val) {
+        if (val === undefined) return this._scale;
+        else {
+          // Save original vals
+          if (this.element._height === undefined) {
+            this.element._height = this.element.height;
+            this.element._width = this.element.width;
+          }
+          this._scale = val;
+          //this.element.height = this.element._height * this._scale;
+          //this.element.width  = this.element._width * this._scale;
+          this.ctx.imageSmoothingEnabled = false;
+          game.helpers.loadMap(game.map.name);
+          return this._scale;
+        }
+      }
     },
     ui:   {
       ctx:     null,
@@ -92,10 +120,22 @@ let game = {
       rect:    null,
       width:   0,
       height:  0,
-
-      // Real width/height of canvas
-      rwidth:  0,
-      rheight: 0
+      _scale:   1,
+      scale(val) {
+        if (val === undefined) return this._scale;
+        else {
+          // Save original vals
+          if (this.element._height === undefined) {
+            this.element._height = this.element.height;
+            this.element._width = this.element.width;
+          }
+          this._scale = val;
+          this.element.height = this.element._height * this._scale;
+          this.element.width  = this.element._width * this._scale;
+          this.ctx.imageSmoothingEnabled = false;
+          return this._scale;
+        }
+      }
     }
   },
 
@@ -159,6 +199,17 @@ let game = {
       tilePreview: document.createElement("canvas")
     },
 
+    _fps: {
+      currentTime: 0,
+      delta: 0,
+      limit: MAX_FPS,
+      lastTime: Date.now(),
+      update(limit) {
+        game.vars._fps.limit    = limit;
+        game.vars._fps.interval = 1000/limit;
+      }
+    },
+
     _console: {
       content: "",
       enabled: true,
@@ -178,6 +229,7 @@ let game = {
 };
 
 $.get('config', (data) => {
+  game.vars._fps.update(MAX_FPS);
   game.vars.config = data;
   game.vars.defaultFont = data.defaultFont;
   game.vars._info.showInfo = data.debug;
@@ -192,13 +244,9 @@ $.get('config', (data) => {
   game.vars._info.tilePreview.ctx = game.vars._info.tilePreview.getContext('2d');
 
   game.vars._info.tilePreview.ctx.imageSmoothingEnabled   = false;
-
-  game.canvas.rwidth  = 512 * game.settings.multiplier;
-  game.canvas.rheight = 288 * game.settings.multiplier;
 });
 
 $(() => {
-  //$("#canvas").attr({height: game.canvas.rheight, width: game.canvas.rwidth});
   // Remove 300ms delay on mobile devices
   FastClick.attach(document.body);
 
@@ -207,23 +255,40 @@ $(() => {
   $(document).bind('touchmove', false);
 
   // Set up main canvas references
-  game.canvas.element = $("#canvas")[0];
-  game.canvas.ctx     = game.canvas.element.getContext('2d');
-  game.canvas.rect    = game.canvas.element.getBoundingClientRect();
+  L_MAIN = game.canvas;
+  L_MAIN.element = $("#canvas")[0];
+  L_MAIN.ctx     = L_MAIN.element.getContext('2d');
+  L_MAIN.rect    = L_MAIN.element.getBoundingClientRect();
+  L_MAIN.name    = "main";
 
   // Set up game and ui layers
-  game.layers.game.element = document.createElement("canvas");
-  game.layers.game.ctx     = game.layers.game.element.getContext('2d');
-  game.layers.game.rect    = game.layers.game.element.getBoundingClientRect();
+  L_GAME = game.layers.game;
+  L_GAME.element = document.createElement("canvas");
+  L_GAME.element.width  = 2048;
+  L_GAME.element.height = 1152;
+  L_GAME.ctx     = L_GAME.element.getContext('2d');
+  L_GAME.rect    = L_GAME.element.getBoundingClientRect();
+  L_GAME.name    = "game";
+  L_GAME.scale(1);
 
-  game.layers.ui.element = document.createElement("canvas");
-  game.layers.ui.ctx     = game.layers.ui.element.getContext('2d');
-  game.layers.ui.rect    = game.layers.ui.element.getBoundingClientRect();
+  L_UI = game.layers.ui;
+  L_UI.element = document.createElement("canvas");
+  L_UI.element.width  = 2048;
+  L_UI.element.height = 1152;
+  L_UI.ctx     = L_UI.element.getContext('2d');
+  L_UI.rect    = L_UI.element.getBoundingClientRect();
+  L_UI.name    = "UI";
+  L_UI.scale(1);
+
+  // Apply main canvas settings
+  L_MAIN.element.width  = 2048;
+  L_MAIN.element.height = 1152;
+  L_MAIN.scale(1);
 
   // Keep things pixelated
-  game.canvas.ctx.imageSmoothingEnabled      = false;
-  game.layers.game.ctx.imageSmoothingEnabled = false;
-  game.layers.ui.ctx.imageSmoothingEnabled   = false;
+  L_MAIN.ctx.imageSmoothingEnabled = false;
+  L_GAME.ctx.imageSmoothingEnabled = false;
+  L_UI.ctx.imageSmoothingEnabled   = false;
 
   // TODO: Need a work around for Android
   // Check to see if application is "installed" (only iOS, doesn't work on Android)
@@ -280,15 +345,19 @@ $(() => {
 */
 
 function render() {
+  // Clear all layers
+  game.animations.clear(L_UI);
+  game.animations.clear(L_GAME);
+
   game.vars._info.renderLastCalled = Date.now();
   if (!game.renderReady) return;
 
   // Pass in current frame for timing logic
   game.renderLoop = requestAnimationFrame(render);
-  currentTime = Date.now();
-  delta = (currentTime-lastTime);
+  game.vars._fps.currentTime = Date.now();
+  game.vars._fps.delta = (game.vars._fps.currentTime-game.vars._fps.lastTime);
 
-  if ((MAX_FPS !== 0 && delta > interval) || MAX_FPS === 0) nextFrame();
+  if ((game.vars._fps.limit !== 0 && game.vars._fps.delta > game.vars._fps.interval) || game.vars._fps.limit === 0) nextFrame();
 
   function nextFrame() {
     // Calculate FPS
@@ -304,47 +373,48 @@ function render() {
 
     // Display FPS
     if (game.vars._info.showInfo) {
-      let oldAlpha = alpha();
-      let oldFill  = fillStyle();
+      let oldAlpha = alpha(L_UI);
+      let oldFill  = fillStyle(L_UI);
 
-      alpha(.6);
-      fillStyle('black');
-      game.canvas.ctx.fillRect(0, 0, 750, 250);
-      fillStyle('white');
-      alpha(1);
+      alpha(.6, L_UI);
+      fillStyle('black', L_UI);
+      fillRect(0, 0, 39.5, 21.7, L_UI);
+      fillStyle('white', L_UI);
+      alpha(1, L_UI);
 
       // vars
+      let line = 2.63;
       let fps  = game.vars._info.fps.toFixed(1);
       let sim  = game.vars._info.sim;
       let ren  = game.vars._info.render;
 
-      if (fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange');
-      if (fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red');
-      text("fps:  " + fps, "24pt Arial", 0, 30);
-      fillStyle('white');
+      if (fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange', L_UI);
+      if (fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red', L_UI);
+      text("fps:  " + fps, "24pt Arial", 0, line*1, L_UI);
+      fillStyle('white', L_UI);
 
-      if (sim > 1000/game.vars._info.rate) fillStyle('red');
-      text("sim: " + sim + " ms", "24pt Arial", 0, 60);
-      fillStyle('white');
+      if (sim > 1000/game.vars._info.rate) fillStyle('red', L_UI);
+      text("sim: " + sim + " ms", "24pt Arial", 0, line*2, L_UI);
+      fillStyle('white', L_UI);
 
-      if (ren > 1000/game.vars._info.rate) fillStyle('red');
-      text("ren: " + ren + " ms", "24pt Arial", 0, 90);
-      fillStyle('white');
+      if (ren > 1000/game.vars._info.rate) fillStyle('red', L_UI);
+      text("ren: " + ren + " ms", "24pt Arial", 0, line*3, L_UI);
+      fillStyle('white', L_UI);
 
       let pos  = game.helpers.getPos();
 
       if (pos.x > 0 && pos.y > 0 && pos.x <= game.map.src.length && pos.y <= game.map.src[0].length) {
         let feet = (game.map !== undefined && pos.x !== "-") ? JSON.stringify(game.map.src[pos.y-1][pos.x-1]) : "[null, null]";
 
-        text("pos: [" + pos.x + "," + pos.y + "] [" + pos.dir + "]", "24pt Arial", 0, 120);
-        text("feet: " + feet, "24pt Arial", 0, 150);
+        text("pos: [" + pos.x + "," + pos.y + "] [" + pos.dir + "]", "24pt Arial", 0, line*4, L_UI);
+        text("feet: " + feet, "24pt Arial", 0, line*5, L_UI);
 
         if (game.map.quadrants.length !== 0) {
           let pos = game.helpers.getPos();
           let xquad = pos.quad[0];
           let yquad = pos.quad[1];
-          text("quads: " + game.map.quadrants[0].length * game.map.quadrants.length + " @ " + game.settings.quadrantsize + "px x " + game.settings.quadrantsize + "px (multiplier: " + game.settings.multiplier + ", tilesize: " + game.settings.tilesize + ")", "24pt Arial", 0, 180);
-          text("curquad: [" + xquad + "," + yquad + "] [" + pos.quad[2] + "," + pos.quad[3] + "]", "24pt Arial", 0, 210);
+          text("quads: " + game.map.quadrants[0].length * game.map.quadrants.length + " @ " + game.settings.quadrantsize + "px x " + game.settings.quadrantsize + "px (multiplier: " + game.settings.multiplier + ", tilesize: " + game.settings.tilesize + ")", "24pt Arial", 0, line*6, L_UI);
+          text("curquad: [" + xquad + "," + yquad + "] [" + pos.quad[2] + "," + pos.quad[3] + "]", "24pt Arial", 0, line*7, L_UI);
         }
 
         // Tile preview
@@ -354,20 +424,22 @@ function render() {
         game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 80, 0, 32, 16);
         game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 80, 0, 32, 16);
 
-        game.canvas.ctx.drawImage(game.vars._info.tilePreview, 190, 125, 112, 32);
+        L_UI.ctx.drawImage(game.vars._info.tilePreview, 190*L_UI.scale(), 125*L_UI.scale(), 112*L_UI.scale(), 32*L_UI.scale());
       }
 
-      fillStyle(oldFill);
-      alpha(oldAlpha);
+      fillStyle(oldFill, L_UI);
+      alpha(oldAlpha, L_UI);
     }
 
-    lastTime = currentTime - (delta % interval);
+    game.vars._fps.lastTime = game.vars._fps.currentTime - (game.vars._fps.delta % game.vars._fps.interval);
 
     // Display Console
     consoleDisplay();
 
     game.vars._info.lastFrameCalled = Date.now();
     game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
+    L_MAIN.ctx.drawImage(L_GAME.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height);
+    L_MAIN.ctx.drawImage(L_UI.element,   0, 0, L_MAIN.element.width, L_MAIN.element.height);
   }
 }
 

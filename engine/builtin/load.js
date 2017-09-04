@@ -68,7 +68,9 @@ game.scripts.logic = (frame) => {
   // Load assets and update progress
   if (frame === 1) {
     game.helpers.loadAssets(() => {
-      game.helpers.loadMap('default');
+      game.helpers.loadMap('default', () => {
+        game.local.loaded = true;
+      });
     });
   }
 
@@ -80,7 +82,7 @@ game.scripts.logic = (frame) => {
         game.local.fadeAway = 0;
         game.local.loadMain = true;
       }
-      alpha(game.local.fadeAway);
+      alpha(game.local.fadeAway, L_UI);
     }
     if (game.local.loadMain) {
       let fps = game.vars._info.fps;
@@ -108,12 +110,12 @@ game.scripts.logic = (frame) => {
     }
     if (Date.now() - game.local.loadedTime < 1500) {
       game.local.poweredByAlpha += .01;
-      alpha(1);
+      alpha(1, L_UI);
     }
     if (Date.now() - game.local.loadedTime < 1500) {
       game.local.huskyAlpha += .01;
       game.local.huskySize += 3;
-      alpha(1);
+      alpha(1, L_UI);
     }
     if (Date.now() - game.local.loadedTime < 1500) {
       if (game.local.engineFont < 10) game.local.engineFont += .5;
@@ -124,45 +126,44 @@ game.scripts.logic = (frame) => {
     }
     if (Date.now() - game.local.loadedTime < 1500) {
       game.local.engineAlpha += .01;
-      alpha(1);
+      alpha(1, L_UI);
     }
   }
 };
-
 
 // Game render loop
 game.scripts.render = (frame) => {
   if (!game.local.huskyLoaded) return;
   game.animations.clear();
 
-  alpha(game.local.fadeAway);
-  text(game.local.fileName, "16pt Arial", "center", 950);
+  alpha(game.local.fadeAway, L_UI);
+  text(game.local.fileName, "16pt Arial", "center", 82, L_UI);
 
-  let prev = fillStyle();
-  fillStyle("#00F");
-  game.canvas.ctx.fillRect(game.canvas.rwidth*.2, 960, (game.local.filesLoaded/game.local.totalFiles)*(game.canvas.rwidth*.8-game.canvas.rwidth*.2), 50);
-  fillStyle(prev);
+  let prev = fillStyle(L_UI);
+  fillStyle("#00F", L_UI);
+  fillRect(20, 83.5, (game.local.filesLoaded/game.local.totalFiles)*60, 4, L_UI);
+  fillStyle(prev, L_UI);
 
   if (game.local.filesLoaded/game.local.totalFiles > .5) {
-    fillStyle("#FFF");
+    fillStyle("#FFF", L_UI);
   }
-  text(((game.local.filesLoaded/game.local.totalFiles)*100).toFixed(2) + "%", "20pt Arial", "center", 995);
-  fillStyle(prev);
 
-  text(game.local.filesLoaded + " / " + game.local.totalFiles, "16pt Arial", "center", 1050);
+  text(((game.local.filesLoaded/game.local.totalFiles)*100).toFixed(2) + "%", "20pt Arial", "center", 86.5, L_UI);
+  fillStyle(prev, L_UI);
+  text(game.local.filesLoaded + " / " + game.local.totalFiles, "16pt Arial", "center", 91, L_UI);
 
   // Powered By
-  alpha(game.local.poweredByAlpha);
-  alpha(game.local.fadeAway);
-  text("Powered By", game.local.poweredByFont + "pt Arial", "center", 365-((game.local.huskySize/4)*1.25));
+  alpha(game.local.poweredByAlpha, L_UI);
+  alpha(game.local.fadeAway, L_UI);
+  text("Powered By", game.local.poweredByFont + "pt Arial", "center", (((365-(((game.local.huskySize)/4)*1.25))/1152)*100), L_UI);
 
-  alpha(game.local.huskyAlpha);
-  alpha(game.local.fadeAway);
-  drawImage('huskyengine', game.canvas.rwidth/2-(game.local.huskySize/2), game.canvas.rheight/2-(game.local.huskySize/2)-200+(game.local.huskySize/4), game.local.huskySize, game.local.huskySize);
+  alpha(game.local.huskyAlpha, L_UI);
+  alpha(game.local.fadeAway, L_UI);
+  drawImage('huskyengine', (L_UI.element._width/2-((game.local.huskySize)/2))*L_UI.scale(), (L_UI.element._height/2-((game.local.huskySize)/2)-200+((game.local.huskySize)/4))*L_UI.scale(), (game.local.huskySize*L_UI.scale()), (game.local.huskySize*L_UI.scale()), L_UI);
 
-  alpha(game.local.engineAlpha);
-  alpha(game.local.fadeAway);
+  alpha(game.local.engineAlpha, L_UI);
+  alpha(game.local.fadeAway, L_UI);
 
-  text("Husky Engine", game.local.engineFont + "pt Arial", "center", 410+((game.local.huskySize/2)*1.6));
+  text("Husky Engine", game.local.engineFont + "pt Arial", "center", ((410+(((game.local.huskySize)/2)*1.6))/1152)*100, L_UI);
 
 };

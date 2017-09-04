@@ -8,6 +8,7 @@ game.scripts.init = (cb) => {
     reflectionWaver: true,
     mapOpacity: 1,
     steps: 0,
+    fauxSteps: 0,
     actions: {
       walk: {
         steps: [1,2,3],
@@ -52,8 +53,8 @@ game.scripts.init = (cb) => {
   };
 
   game.local.stepCalculation = (type="walk") => {
-    if (type === "wheelie") return game.local.actions[type].steps[game.local.steps % 2];
-    else if (game.local.actionPerc > .2 && game.local.actionPerc < .8) return game.local.actions[type].steps[(game.local.steps % 2) + 1];
+    if (type === "wheelie") return game.local.actions[type].steps[game.local.fauxSteps % 2];
+    else if (game.local.actionPerc > .2 && game.local.actionPerc < .8) return game.local.actions[type].steps[(game.local.fauxSteps % 2) + 1];
     else return game.local.actions[type].steps[0];
   };
 
@@ -61,32 +62,32 @@ game.scripts.init = (cb) => {
     if (!game.helpers.mobileCheck()) return;
 
     // Restore transparency
-    alpha(game.scripts.layout._misc.transparency);
+    alpha(game.scripts.layout._misc.transparency, L_UI);
 
     // A button
-    alpha((game.button.held.a || game.key.held.a) ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/a.svg", game.scripts.layout.buttons.a.x, game.scripts.layout.buttons.a.y, game.scripts.layout.buttons.a.width, game.scripts.layout.buttons.a.height);
+    alpha((game.button.held.a || game.key.held.a) ? 1 : game.scripts.layout._misc.transparency, L_UI);
+    drawImage("buttons/a.svg", game.scripts.layout.buttons.a.x*L_UI.scale(), game.scripts.layout.buttons.a.y*L_UI.scale(), game.scripts.layout.buttons.a.width*L_UI.scale(), game.scripts.layout.buttons.a.height*L_UI.scale(), L_UI);
 
     // B button
-    alpha((game.button.held.b || game.key.held.b) ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/b.svg", game.scripts.layout.buttons.b.x, game.scripts.layout.buttons.b.y, game.scripts.layout.buttons.b.width, game.scripts.layout.buttons.b.height);
+    alpha((game.button.held.b || game.key.held.b) ? 1 : game.scripts.layout._misc.transparency, L_UI);
+    drawImage("buttons/b.svg", game.scripts.layout.buttons.b.x*L_UI.scale(), game.scripts.layout.buttons.b.y*L_UI.scale(), game.scripts.layout.buttons.b.width*L_UI.scale(), game.scripts.layout.buttons.b.height*L_UI.scale(), L_UI);
 
     // Dpad Controls
-    alpha((game.button.held.up || game.key.held.ArrowUp) ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/up.svg", game.scripts.layout.buttons.up.x, game.scripts.layout.buttons.up.y, game.scripts.layout.buttons.up.width, game.scripts.layout.buttons.up.height);
+    alpha((game.button.held.up || game.key.held.ArrowUp) ? 1 : game.scripts.layout._misc.transparency, L_UI);
+    drawImage("buttons/up.svg", game.scripts.layout.buttons.up.x*L_UI.scale(), game.scripts.layout.buttons.up.y*L_UI.scale(), game.scripts.layout.buttons.up.width*L_UI.scale(), game.scripts.layout.buttons.up.height*L_UI.scale(), L_UI);
 
-    alpha((game.button.held.right || game.key.held.ArrowRight) ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/right.svg", game.scripts.layout.buttons.right.x, game.scripts.layout.buttons.right.y, game.scripts.layout.buttons.right.width, game.scripts.layout.buttons.right.height);
+    alpha((game.button.held.right || game.key.held.ArrowRight) ? 1 : game.scripts.layout._misc.transparency, L_UI);
+    drawImage("buttons/right.svg", game.scripts.layout.buttons.right.x*L_UI.scale(), game.scripts.layout.buttons.right.y*L_UI.scale(), game.scripts.layout.buttons.right.width*L_UI.scale(), game.scripts.layout.buttons.right.height*L_UI.scale(), L_UI);
 
-    alpha((game.button.held.down || game.key.held.ArrowDown) ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/down.svg", game.scripts.layout.buttons.down.x, game.scripts.layout.buttons.down.y, game.scripts.layout.buttons.down.width, game.scripts.layout.buttons.down.height);
+    alpha((game.button.held.down || game.key.held.ArrowDown) ? 1 : game.scripts.layout._misc.transparency, L_UI);
+    drawImage("buttons/down.svg", game.scripts.layout.buttons.down.x*L_UI.scale(), game.scripts.layout.buttons.down.y*L_UI.scale(), game.scripts.layout.buttons.down.width*L_UI.scale(), game.scripts.layout.buttons.down.height*L_UI.scale(), L_UI);
 
-    alpha((game.button.held.left || game.key.held.ArrowLeft) ? 1 : game.scripts.layout._misc.transparency);
-    drawImage("buttons/left.svg", game.scripts.layout.buttons.left.x, game.scripts.layout.buttons.left.y, game.scripts.layout.buttons.left.width, game.scripts.layout.buttons.left.height);
+    alpha((game.button.held.left || game.key.held.ArrowLeft) ? 1 : game.scripts.layout._misc.transparency, L_UI);
+    drawImage("buttons/left.svg", game.scripts.layout.buttons.left.x*L_UI.scale(), game.scripts.layout.buttons.left.y*L_UI.scale(), game.scripts.layout.buttons.left.width*L_UI.scale(), game.scripts.layout.buttons.left.height*L_UI.scale(), L_UI);
     ////////////////
 
     // Restore transparency
-    alpha(game.scripts.layout._misc.transparency);
+    alpha(game.scripts.layout._misc.transparency, L_UI);
   };
 
   game.local.keyWalk = (key) => {
@@ -243,6 +244,7 @@ game.scripts.logic = (frame) => {
         game.local[game.local.vals[game.local.dir][0]] += game.local.vals[game.local.dir][1];
         game.local.steps++;
       }
+      game.local.fauxSteps++;
       game.local.actionPerc = 0;
       game.local.moving = false;
       game.local.fauxmove = false;
@@ -254,6 +256,11 @@ game.scripts.logic = (frame) => {
 
 // Game render loop
 game.scripts.render = (frame) => {
+  if (frame === 1) game.animations.clear();
+
+  fillStyle('black', L_GAME);
+  fillRect(0, 0, L_GAME.element.width, L_GAME.element.height);
+
   let oldAlpha, oldFill;
 
   // Interpolate position of player while moving
@@ -266,47 +273,53 @@ game.scripts.render = (frame) => {
     }
   }
 
-  game.animations.clear();
+  game.animations.clear(L_GAME);
 
   // Draw reflectables first
   let pos = game.helpers.getPos()
   for (let i = 0; i < game.map.reflections.length; i++) {
     let tile = {tile: game.map.reflections[i].tile, x: game.map.reflections[i].i*16-16+game.map.reflections[i].l, y: game.map.reflections[i].j*16-16+game.map.reflections[i].k}
-    game.canvas.ctx.drawImage(game.assets.images['tilesheet.png'], (tile.tile[0] % 16) * 16, Math.floor(tile.tile[0] / 16) * 16, 16, 16, ~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64);
-    game.canvas.ctx.drawImage(game.assets.images['tilesheet.png'], (tile.tile[1] % 16) * 16, Math.floor(tile.tile[1] / 16) * 16, 16, 16, ~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64);
+    drawImage('tilesheet.png', (tile.tile[0] % 16) * 16, Math.floor(tile.tile[0] / 16) * 16, 16, 16, ~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64, L_GAME);
+    drawImage('tilesheet.png', (tile.tile[1] % 16) * 16, Math.floor(tile.tile[1] / 16) * 16, 16, 16, ~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64, L_GAME);
   }
 
   // Draw reflection
   if (game.local.reflection) {
-    alpha(.25);
+    alpha(.25, L_GAME);
     if (game.local.reflectionWaver) {
-      drawSpriteReflection(['boy_inversed.png', game.local.action, game.local.dir.slice(5).toLowerCase(), game.local.stepCalculation(game.local.action)], 16*64, 10*64);
+      drawSpriteReflection(['boy_inversed.png', game.local.action, game.local.dir.slice(5).toLowerCase(), game.local.stepCalculation(game.local.action)], 16*64, 10*64, L_GAME);
     } else {
-      drawSprite(['boy_inversed.png', game.local.action, game.local.dir.slice(5).toLowerCase(), game.local.stepCalculation(game.local.action)], 16*64, 10*64);
+      drawSprite(['boy_inversed.png', game.local.action, game.local.dir.slice(5).toLowerCase(), game.local.stepCalculation(game.local.action)], 16*64, 10*64, L_GAME);
     }
-    alpha(1);
+    alpha(1, L_GAME);
   }
 
-  oldAlpha = alpha();
-  alpha(game.local.mapOpacity);
+  oldAlpha = alpha(L_GAME);
+  alpha(game.local.mapOpacity, L_GAME);
   // Draw quadrants
-  let size = game.settings.quadrantsize;
+  let xquad = pos.quad[0];
+  let yquad = pos.quad[1];
+  let size = 256*L_GAME.scale();
   for (let i = 0; i < game.map.quadrants.length; i++) {
     for (let j = 0; j < game.map.quadrants[0].length; j++) {
-      game.canvas.ctx.drawImage(game.map.quadrants[j][i], 0, 0, size, size, game.settings.quadrantsize*j+game.local.x*game.settings.multiplier*game.settings.tilesize+game.local.tempX, game.settings.quadrantsize*i+game.local.y*game.settings.multiplier*game.settings.tilesize+game.local.tempY, size, size);
+      if (j >= xquad-3 && j <= xquad && i >= yquad-2 && i <= yquad) {
+        //console.log(j, i, xquad, yquad, j >= xquad && j <= xquad+2 && i >= yquad && i <= yquad+2);
+        //console.log(`drawImage(game.map.quadrants[${j}][${i}], 0, 0, ${size}, ${size}, ${1024*j+game.local.x*game.settings.multiplier*game.settings.tilesize+game.local.tempX}, ${1024*i+game.local.y*game.settings.multiplier*game.settings.tilesize+game.local.tempY}, 1024, 1024, L_GAME);`);
+        drawImage(game.map.quadrants[j][i], 0, 0, size, size, 1024*j+game.local.x*game.settings.multiplier*game.settings.tilesize+game.local.tempX, 1024*i+game.local.y*game.settings.multiplier*game.settings.tilesize+game.local.tempY, 1024, 1024, L_GAME);
+      }
     }
   }
-  alpha(oldAlpha);
+  alpha(oldAlpha, L_GAME);
   //drawImage('map.png', game.local.x*64+game.local.tempX, game.local.y*64+game.local.tempY, 3200, 3200);
   
-  drawSprite(['boy.png', game.local.action, game.local.dir.slice(5).toLowerCase(), game.local.stepCalculation(game.local.action)], "center", "center");
+  drawSprite(['boy.png', game.local.action, game.local.dir.slice(5).toLowerCase(), game.local.stepCalculation(game.local.action)], "center", "center", L_GAME);
 
   // Draw cover tiles
   if (game.local.showCovers) {
-    oldAlpha = alpha();
-    oldFill  = fillStyle();
-    alpha(.75);
-    fillStyle('black');
+    oldAlpha = alpha(L_GAME);
+    oldFill  = fillStyle(L_GAME);
+    alpha(.75, L_GAME);
+    fillStyle('black', L_GAME);
   }
 
   pos = game.helpers.getPos()
@@ -314,35 +327,35 @@ game.scripts.render = (frame) => {
     let tile = {tile: game.map.cover[i].tile, x: game.map.cover[i].i*16-16+game.map.cover[i].l, y: game.map.cover[i].j*16-16+game.map.cover[i].k}
     //[~~-(pos.x-tile.x-16)*64, ~~-(pos.y-tile.y-9)*64]
     if (game.local.showCovers) {
-      game.canvas.ctx.fillRect(~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64);
+      fillRect(~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64, L_GAME);
     } else {
-      game.canvas.ctx.drawImage(game.assets.images['tilesheet.png'], (tile.tile % 16) * 16, Math.floor(tile.tile / 16) * 16, 16, 16, ~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64);
+      drawImage('tilesheet.png', (tile.tile % 16) * 16, Math.floor(tile.tile / 16) * 16, 16, 16, ~~-(pos.x-tile.x-16)*64+game.local.tempX, ~~-(pos.y-tile.y-9)*64+game.local.tempY, 64, 64, L_GAME);
     }
   }
   if (game.local.showCovers) {
-    alpha(oldAlpha);
-    fillStyle(oldFill);
+    alpha(oldAlpha, L_GAME);
+    fillStyle(oldFill, L_GAME);
   }
 
   // Draw solids if enabled
   if (game.local.showSolids) {
 
-    oldAlpha = alpha();
-    oldFill  = fillStyle();
-    alpha(.75);
-    fillStyle('red');
+    oldAlpha = alpha(L_GAME);
+    oldFill  = fillStyle(L_GAME);
+    alpha(.75, L_GAME);
+    fillStyle('red', L_GAME);
 
     let pos = game.helpers.getPos()
     for (let i = 0; i < game.map.src.length; i++) {
       for (let j = 0; j < game.map.src[0].length; j++) {
         if (!game.local.validmove({x: j+1, y: i+1})) {
-          game.canvas.ctx.fillRect(~~-(pos.x-j-16)*64+game.local.tempX+64, ~~-(pos.y-i-9)*64+game.local.tempY+64, 64, 64);
+          fillRect((~~-(pos.x-j-16)*64+game.local.tempX+64) * L_GAME.scale() + "px", (~~-(pos.y-i-9)*64+game.local.tempY+64) * L_GAME.scale() + "px", 64 * L_GAME.scale() + "px", 64 * L_GAME.scale() + "px", L_GAME);
         }
       }
     }
 
-    alpha(oldAlpha);
-    fillStyle(oldFill);
+    alpha(oldAlpha, L_GAME);
+    fillStyle(oldFill, L_GAME);
   }
 
   game.local.renderButtons();
