@@ -1,5 +1,6 @@
 // Init script
 game.scripts.init = (cb) => {
+  game.helpers.load('examples/game');
   cb();
 };
 
@@ -54,9 +55,8 @@ game.scripts.logic = (frame) => {
 
 // Game render loop
 game.scripts.render = (frame) => {
-  game.animations.clear();
-  fillStyle('black');
-  game.canvas.ctx.fillRect(0, 0, game.canvas.rwidth, game.canvas.rheight);
-  fillStyle('white');
-  text("Awesome game stuff here", 32, "center", "center");
+  fillStyle('black', L_GAME);
+  fillRect(0, 0, L_GAME.element.width, L_GAME.element.height, L_GAME);
+  fillStyle('white', L_GAME);
+  text("Awesome game stuff here", 32, "center", "center", L_GAME);
 };

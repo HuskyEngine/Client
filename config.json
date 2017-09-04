@@ -5,5 +5,8 @@
   "fonts":[{
     "name":null,
     "src":null
-  }]
+  }],
+  "multiplier": 4,
+  "tilesize": 16,
+  "quadrantsize": 1024
 }

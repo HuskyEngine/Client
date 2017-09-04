@@ -31,18 +31,51 @@ function consoleHandler(key) {
         action() {},
         man: `Clear the console log.`
       },
+      fps: {
+        action() {
+          let limit = Number((command[1] || -1));
+          if (Number.isNaN(limit)) limit = 0;
+          if (limit === -1) result = game.vars._fps.limit;
+          else {
+            game.vars._fps.update(limit);
+            result = limit;
+          }
+        },
+        man: `Sets/Fetches max fps.`
+      },
+      godmode: {
+        action() {
+          game.local.godmode = !game.local.godmode;
+          result = game.local.godmode;
+        },
+        man: `Enables god mode (noclip).`
+      },
       help: {
         action() {
           result = Object.keys(commands);
         },
         man: `Shows available commands.`
       },
-      hidefps: {
+      hideinfo: {
         action() {
-            game.vars._fps.showFPS = false;
+            game.vars._info.showInfo = false;
             result = "true";
         },
-        man: `Hides current framerate.`
+        man: `Hides info.`
+      },
+      hidecovers: {
+        action() {
+          game.local.showCovers = false;
+          result = "false";
+        },
+        man: `Hides covers`
+      },
+      hidesolids: {
+        action() {
+          game.local.showSolids = false;
+          result = "false";
+        },
+        man: `Hides solids`
       },
       info: {
         action() {
@@ -83,12 +116,57 @@ function consoleHandler(key) {
         },
         man: `Force game into specified mode. Accepts mobile/1, desktop/2, or any other value for automatic detection (default).`
       },
-      showfps: {
+      opacity: {
         action() {
-            game.vars._fps.showFPS = true;
-            result = "true";
+          game.local.mapOpacity = Number((command[1] || 1));
+          result = Number((command[1] || 1));
         },
-        man: `Shows current framerate.`
+        man: `Set map render opacity`
+      },
+      scale: {
+        action() {
+          if (command[1] === "game") {
+            let num = Number(command[2]);
+            if (command[2] === undefined) {
+              result = "Game scale is currently " + L_GAME.scale();
+            } else if (!Number.isNaN(num)) {
+              let old = L_GAME.scale();
+              L_GAME.scale(num);
+              result = "Game scale changed from " + old + " to " + L_GAME.scale();
+            }
+          } else if (command[1] === "ui") {
+            let num = Number(command[2]);
+            if (command[2] === undefined) {
+              result = "UI scale is currently " + L_UI.scale();
+            } else if (!Number.isNaN(num)) {
+              let old = L_UI.scale();
+              L_UI.scale(num);
+              result = "UI scale changed from " + old + " to " + L_UI.scale();
+            }
+          }
+        },
+        man: `Change the scale of ui/game layers`
+      },
+      showinfo: {
+        action() {
+          game.vars._info.showInfo = true;
+          result = "true";
+        },
+        man: `Shows info.`
+      },
+      showcovers: {
+        action() {
+          game.local.showCovers = true;
+          result = "true";
+        },
+        man: `Shows covers`
+      },
+      showsolids: {
+        action() {
+          game.local.showSolids = true;
+          result = "true";
+        },
+        man: `Shows solids`
       },
       refresh: {
         action() {
@@ -107,6 +185,7 @@ function consoleHandler(key) {
             } else {
               game.helpers.load(game.vars._script);
             }
+            game.vars._console.display = false;
           }, 100);
           result = "Reloading scene...";
         },
@@ -132,6 +211,30 @@ function consoleHandler(key) {
           result = "Reloading assets";
         },
         man: `Reload game assets and then reload scene.`
+      },
+      loadmap: {
+        action() {
+          let map = command[1] === undefined ? game.map.name : command[1];
+          game.helpers.loadMap(map);
+          result = "Loading map " + map;
+        },
+        man: `Loads supplied map.`
+      },
+      reflection: {
+        action() {
+          let mode = Number((command[1] || 0));
+          if (mode === 1) {
+            game.local.reflection = true;
+            game.local.reflectionWaver = false;
+          } else if (mode === 2) {
+            game.local.reflection = true;
+            game.local.reflectionWaver = true;
+          } else {
+            game.local.reflection = false;
+          }
+          result = mode;
+        },
+        man: `Enable reflections`
       }
     };
 
@@ -188,32 +291,31 @@ function consoleHandler(key) {
 
 function consoleDisplay() {
   if (game.vars._console.display) {
-    let oldAlpha = alpha();
-    let oldFill  = fillStyle();
+    let oldAlpha = alpha(L_UI);
+    let oldFill  = fillStyle(L_UI);
 
-    alpha(0.5);
-    fillStyle('black');
-    game.canvas.ctx.fillRect(0, 0, game.canvas.rwidth, game.canvas.rheight);
-    fillStyle('white');
-    alpha(1);
+    alpha(0.5, L_UI);
+    fillStyle('black', L_UI);
+    fillRect(0, 0, L_UI.element.width, L_UI.element.height, L_UI);
+    fillStyle('white', L_UI);
+    alpha(1, L_UI);
 
     let linenum = 0;
     let content = "Husky Engine v0.0.1 > " + game.vars._console.content;
-    text(content, "24pt Arial", 0, 30+(30*linenum));
+    text(content, "24pt Arial", 0, 2.5*(linenum+1), L_UI);
 
     // Show partial match
     if (game.vars._console.match !== "") {
-      fillStyle('#AAA');
-      text(game.vars._console.match, "24pt Arial", game.canvas.ctx.measureText(content).width, 30+(30*linenum));
-      fillStyle('white');
+      fillStyle('#AAA', L_UI);
+      text(game.vars._console.match, "24pt Arial", L_UI.ctx.measureText(content).width + "px", 2.5*(linenum+1), L_UI);
+      fillStyle('white', L_UI);
     }
-    //game.vars._console.match
-    //(game.vars._console.blink ? "|" : "")
+
     game.vars._console.log.forEach((line) => {
-      text(line, "24pt Arial", 0, 30+(30*++linenum));
+      text(line, "24pt Arial", 0, 2.5*(++linenum+2), L_UI);
     });
 
-    fillStyle(oldFill);
-    alpha(oldAlpha);
+    fillStyle(oldFill, L_UI);
+    alpha(oldAlpha, L_UI);
   }
 }

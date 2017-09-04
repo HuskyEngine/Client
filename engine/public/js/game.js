@@ -1,11 +1,16 @@
-// Game namescape object
+const MAX_FPS = 0;
+let L_MAIN;
+let L_GAME;
+let L_UI;
+
+// Game namespace object
 let game = {
 
   // Hold all game assets
   assets: {
     animations: {},
     sprites:    {},
-    audio:      {},
+    sounds:     {},
     images:     {}
   },
 
@@ -29,7 +34,7 @@ let game = {
     held:  {}
   },
 
-  // Main game canvas
+  // Main canvas
   canvas: {
     ctx:     null,
     element: null,
@@ -42,10 +47,26 @@ let game = {
     rect:    null,
     width:   0,
     height:  0,
+    _scale:   1,
+    scale(val) {
+      if (val === undefined) return this._scale;
+      else {
+        // Save original vals
+        if (this.element._height === undefined) {
+          this.element._height = this.element.height;
+          this.element._width = this.element.width;
+        }
+        this._scale = val;
+        this.element.height = this.element._height * this._scale;
+        this.element.width  = this.element._width * this._scale;
+        this.ctx.imageSmoothingEnabled = false;
+        return this._scale;
+      }
+    },
 
     // Real width/height of canvas
-    rwidth:  2048,
-    rheight: 1152
+    rwidth:  0,
+    rheight: 0
   },
 
   // Helper functions
@@ -55,6 +76,69 @@ let game = {
   intervals:   [],
   timeouts:    [],
 
+  // Hold canvas layers
+  layers: {
+    game: {
+      ctx:     null,
+      element: null,
+
+      // Determine scale for buttons and UI elements
+      mult: {
+        width:  1,
+        height: 1
+      },
+      rect:    null,
+      width:   0,
+      height:  0,
+      _scale:   1,
+      scale(val) {
+        if (val === undefined) return this._scale;
+        else {
+          // Save original vals
+          if (this.element._height === undefined) {
+            this.element._height = this.element.height;
+            this.element._width = this.element.width;
+          }
+          this._scale = val;
+          //this.element.height = this.element._height * this._scale;
+          //this.element.width  = this.element._width * this._scale;
+          this.ctx.imageSmoothingEnabled = false;
+          game.helpers.loadMap(game.map.name);
+          return this._scale;
+        }
+      }
+    },
+    ui:   {
+      ctx:     null,
+      element: null,
+
+      // Determine scale for buttons and UI elements
+      mult: {
+        width:  1,
+        height: 1
+      },
+      rect:    null,
+      width:   0,
+      height:  0,
+      _scale:   1,
+      scale(val) {
+        if (val === undefined) return this._scale;
+        else {
+          // Save original vals
+          if (this.element._height === undefined) {
+            this.element._height = this.element.height;
+            this.element._width = this.element.width;
+          }
+          this._scale = val;
+          this.element.height = this.element._height * this._scale;
+          this.element.width  = this.element._width * this._scale;
+          this.ctx.imageSmoothingEnabled = false;
+          return this._scale;
+        }
+      }
+    }
+  },
+
   // Holds arguments passed into currently loaded scene
   loadArgs:    {},
 
@@ -63,10 +147,24 @@ let game = {
   logicLoop:   null,
   logicReady:  false,
 
+  // Map data
+  map: {
+    name: null,
+    src:  null,
+    grid: [],
+    quadrants: [],
+    reflections: [],
+    cover: [],
+    coverTiles: [625, 577, 593, 609, 608, 592, 533, 560, 561, 570, 571, 586, 587, 568, 569, 584, 585, 864, 865, 866, 867, 868, 644, 645, 646, 647, 725, 726, 727, 720, 721, 722, 723, 724, 656, 657, 658, 659, 1272, 1273, 1274, 1275, 1276]
+  },
+
   // Render loop
   renderFrame: 0,
   renderLoop:  null,
   renderReady: false,
+
+  // Hold all canvases that are to be saved and reused
+  scopes: {},
 
   // Hold all of the scripts passed in by loadedscene
   scripts: {
@@ -85,25 +183,34 @@ let game = {
   // Global vars to be shared between scenes
   vars: {
 
-    // FPS counter
-    _fps: {
-      showFPS: true,
-      rate: 0,
-      fps: 0,
-      lastCalled: Date.now()
-    },
-
     // Sim/Network info
     _info: {
       showInfo: true,
       sim: 0,
       render: 0,
+      rate: 0,
+      fps: 0,
+      tmpFrame: 0,
       simLastCalled: Date.now(),
-      renderLastCalled: Date.now()
+      renderLastCalled: Date.now(),
+      lastFrameCalled: Date.now(),
+      lastCalled: Date.now(),
+      lastFrameCount: 0,
+      tilePreview: document.createElement("canvas")
+    },
+
+    _fps: {
+      currentTime: 0,
+      delta: 0,
+      limit: MAX_FPS,
+      lastTime: Date.now(),
+      update(limit) {
+        game.vars._fps.limit    = limit;
+        game.vars._fps.interval = 1000/limit;
+      }
     },
 
     _console: {
-      blink: false,
       content: "",
       enabled: true,
       display: false,
@@ -112,7 +219,8 @@ let game = {
       historyIndex: 0,
       match: ""
     },
-    _mobileCheckOverride: null
+    _mobileCheckOverride: null,
+    _reflectionStep: 0
 
   },
 
@@ -121,9 +229,21 @@ let game = {
 };
 
 $.get('config', (data) => {
+  game.vars._fps.update(MAX_FPS);
   game.vars.config = data;
   game.vars.defaultFont = data.defaultFont;
-  game.vars._fps.showFPS = data.debug;
+  game.vars._info.showInfo = data.debug;
+  game.settings.multiplier = data.multiplier;
+  game.settings.tilesize = data.tilesize;
+  game.settings.quadrantsize = data.quadrantsize;
+
+  game.vars._info.tilePreview.width = 112;
+  game.vars._info.tilePreview.height = data.tilesize;
+  game.vars._info.tilePreview.style.width = 112 + "px";
+  game.vars._info.tilePreview.style.height = data.tilesize + "px";
+  game.vars._info.tilePreview.ctx = game.vars._info.tilePreview.getContext('2d');
+
+  game.vars._info.tilePreview.ctx.imageSmoothingEnabled   = false;
 });
 
 $(() => {
@@ -135,12 +255,40 @@ $(() => {
   $(document).bind('touchmove', false);
 
   // Set up main canvas references
-  game.canvas.element = $("#canvas")[0];
-  game.canvas.ctx     = game.canvas.element.getContext('2d');
-  game.canvas.rect    = game.canvas.element.getBoundingClientRect();
+  L_MAIN = game.canvas;
+  L_MAIN.element = $("#canvas")[0];
+  L_MAIN.ctx     = L_MAIN.element.getContext('2d');
+  L_MAIN.rect    = L_MAIN.element.getBoundingClientRect();
+  L_MAIN.name    = "main";
+
+  // Set up game and ui layers
+  L_GAME = game.layers.game;
+  L_GAME.element = document.createElement("canvas");
+  L_GAME.element.width  = 2048;
+  L_GAME.element.height = 1152;
+  L_GAME.ctx     = L_GAME.element.getContext('2d');
+  L_GAME.rect    = L_GAME.element.getBoundingClientRect();
+  L_GAME.name    = "game";
+  L_GAME.scale(1);
+
+  L_UI = game.layers.ui;
+  L_UI.element = document.createElement("canvas");
+  L_UI.element.width  = 2048;
+  L_UI.element.height = 1152;
+  L_UI.ctx     = L_UI.element.getContext('2d');
+  L_UI.rect    = L_UI.element.getBoundingClientRect();
+  L_UI.name    = "UI";
+  L_UI.scale(1);
+
+  // Apply main canvas settings
+  L_MAIN.element.width  = 2048;
+  L_MAIN.element.height = 1152;
+  L_MAIN.scale(1);
 
   // Keep things pixelated
-  game.canvas.ctx.imageSmoothingEnabled = false;
+  L_MAIN.ctx.imageSmoothingEnabled = false;
+  L_GAME.ctx.imageSmoothingEnabled = false;
+  L_UI.ctx.imageSmoothingEnabled   = false;
 
   // TODO: Need a work around for Android
   // Check to see if application is "installed" (only iOS, doesn't work on Android)
@@ -197,58 +345,102 @@ $(() => {
 */
 
 function render() {
+  // Clear all layers
+  game.animations.clear(L_UI);
+  game.animations.clear(L_GAME);
+
   game.vars._info.renderLastCalled = Date.now();
   if (!game.renderReady) return;
 
-  // Calculate FPS
-  if (game.renderFrame % 60 === 0) {
-    game.vars._fps.fps = (60*1000)/(Date.now() - game.vars._fps.lastCalled);
-    game.vars._fps.lastCalled = Date.now();
-  }
-
   // Pass in current frame for timing logic
-  game.scripts.render(++game.renderFrame);
   game.renderLoop = requestAnimationFrame(render);
+  game.vars._fps.currentTime = Date.now();
+  game.vars._fps.delta = (game.vars._fps.currentTime-game.vars._fps.lastTime);
 
-  // Display FPS
-  if (game.vars._fps.showFPS) {
-    let oldAlpha = alpha();
-    let oldFill  = fillStyle();
-    
-    alpha(1);
-    fillStyle('white');
-    game.canvas.ctx.fillRect(0, 0, 200, 35);
-    game.canvas.ctx.fillRect(0, 0, 200, 65);
-    game.canvas.ctx.fillRect(0, 0, 200, 95);
-    fillStyle('black');
+  if ((game.vars._fps.limit !== 0 && game.vars._fps.delta > game.vars._fps.interval) || game.vars._fps.limit === 0) nextFrame();
 
-    let fps = game.vars._fps.fps.toFixed(1);
-    let sim = game.vars._info.sim;
-    let ren = game.vars._info.render;
-    //if (sim <= 1) sim = "<= 1";
-    //if (ren <= 1) ren = "<= 1";
+  function nextFrame() {
+    // Calculate FPS
+    if (Date.now() - game.vars._info.lastCalled >= 1000) {
+      game.vars._info.fps = game.vars._info.tmpFrame;
+      if (game.vars._info.fps <= 0) game.vars._info.fps = 0;
+      game.vars._info.tmpFrame = 0;
+      game.vars._info.lastCalled = Date.now();
+    }
 
-    if (fps < (game.vars._fps.rate - game.vars._fps.rate * .05)) fillStyle('orange');
-    if (fps < (game.vars._fps.rate - game.vars._fps.rate * .15)) fillStyle('red');
-    text("fps:  " + fps, "24pt Arial", 0, 30);
-    fillStyle('black');
+    game.scripts.render(++game.renderFrame);
+    game.vars._info.tmpFrame++;
 
-    if (sim > 1000/game.vars._fps.rate) fillStyle('red');
-    text("sim: " + sim + " ms", "24pt Arial", 0, 60);
-    fillStyle('black');
+    // Display FPS
+    if (game.vars._info.showInfo) {
+      let oldAlpha = alpha(L_UI);
+      let oldFill  = fillStyle(L_UI);
 
-    if (ren > 1000/game.vars._fps.rate) fillStyle('red');
-    text("ren: " + ren + " ms", "24pt Arial", 0, 90);
-    fillStyle('black');
+      alpha(.6, L_UI);
+      fillStyle('black', L_UI);
+      fillRect(0, 0, 39.5, 21.7, L_UI);
+      fillStyle('white', L_UI);
+      alpha(1, L_UI);
 
-    fillStyle(oldFill);
-    alpha(oldAlpha);
+      // vars
+      let line = 2.63;
+      let fps  = game.vars._info.fps.toFixed(1);
+      let sim  = game.vars._info.sim;
+      let ren  = game.vars._info.render;
+
+      if (fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange', L_UI);
+      if (fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red', L_UI);
+      text("fps:  " + fps, "24pt Arial", 0, line*1, L_UI);
+      fillStyle('white', L_UI);
+
+      if (sim > 1000/game.vars._info.rate) fillStyle('red', L_UI);
+      text("sim: " + sim + " ms", "24pt Arial", 0, line*2, L_UI);
+      fillStyle('white', L_UI);
+
+      if (ren > 1000/game.vars._info.rate) fillStyle('red', L_UI);
+      text("ren: " + ren + " ms", "24pt Arial", 0, line*3, L_UI);
+      fillStyle('white', L_UI);
+
+      let pos  = game.helpers.getPos();
+
+      if (pos.x > 0 && pos.y > 0 && pos.x <= game.map.src.length && pos.y <= game.map.src[0].length) {
+        let feet = (game.map !== undefined && pos.x !== "-") ? JSON.stringify(game.map.src[pos.y-1][pos.x-1]) : "[null, null]";
+
+        text("pos: [" + pos.x + "," + pos.y + "] [" + pos.dir + "]", "24pt Arial", 0, line*4, L_UI);
+        text("feet: " + feet, "24pt Arial", 0, line*5, L_UI);
+
+        if (game.map.quadrants.length !== 0) {
+          let pos = game.helpers.getPos();
+          let xquad = pos.quad[0];
+          let yquad = pos.quad[1];
+          text("quads: " + game.map.quadrants[0].length * game.map.quadrants.length + " @ " + game.settings.quadrantsize + "px x " + game.settings.quadrantsize + "px (multiplier: " + game.settings.multiplier + ", tilesize: " + game.settings.tilesize + ")", "24pt Arial", 0, line*6, L_UI);
+          text("curquad: [" + xquad + "," + yquad + "] [" + pos.quad[2] + "," + pos.quad[3] + "]", "24pt Arial", 0, line*7, L_UI);
+        }
+
+        // Tile preview
+        game.vars._info.tilePreview.ctx.clearRect(0, 0, 112, 32)
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 40, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 80, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 80, 0, 32, 16);
+
+        L_UI.ctx.drawImage(game.vars._info.tilePreview, 190*L_UI.scale(), 125*L_UI.scale(), 112*L_UI.scale(), 32*L_UI.scale());
+      }
+
+      fillStyle(oldFill, L_UI);
+      alpha(oldAlpha, L_UI);
+    }
+
+    game.vars._fps.lastTime = game.vars._fps.currentTime - (game.vars._fps.delta % game.vars._fps.interval);
+
+    // Display Console
+    consoleDisplay();
+
+    game.vars._info.lastFrameCalled = Date.now();
+    game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
+    L_MAIN.ctx.drawImage(L_GAME.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height);
+    L_MAIN.ctx.drawImage(L_UI.element,   0, 0, L_MAIN.element.width, L_MAIN.element.height);
   }
-
-  // Display Console
-  consoleDisplay();
-
-  game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
 }
 
 game.logicLoop = setInterval(() => {
@@ -312,7 +504,25 @@ game.logicLoop = setInterval(() => {
   // Pass in logic frame for timing
   game.scripts.logic(++game.logicFrame);
 
-  game.vars._console.blink = (Date.now()/100) % 10 > 5;
+  game.vars._reflectionStep++;
+
+  if (game.vars._reflectionStep % 30 === 0) {
+    game.vars.rand0 = getRandomIntInclusive(-2,2);
+  } else if (game.vars._reflectionStep % 30 === 5) {
+    game.vars.rand3 = getRandomIntInclusive(-2,2);
+  } else if (game.vars._reflectionStep % 30 === 10) {
+    game.vars.rand2 = getRandomIntInclusive(-2,2);
+  } else if (game.vars._reflectionStep % 30 === 15) {
+    game.vars.rand4 = getRandomIntInclusive(-2,2);
+  } else if (game.vars._reflectionStep % 30 === 20) {
+    game.vars.rand1 = getRandomIntInclusive(-2,2);
+  }
 
   game.vars._info.sim = Date.now() - game.vars._info.simLastCalled;
 }, 1000/60);
+
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+}

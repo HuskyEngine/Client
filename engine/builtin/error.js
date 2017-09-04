@@ -35,10 +35,9 @@ game.scripts.logic = (frame) => {
 
 // Game render loop
 game.scripts.render = (frame) => {
-  game.animations.clear();
-  fillStyle("red");
-  game.canvas.ctx.fillRect(0, 0, game.canvas.rwidth, game.canvas.rheight);
-  fillStyle("white");
-  text("Husky Engine encountered an error: " + game.loadArgs.type, "32pt Arial", "100", "100");
-  text(game.loadArgs.msg, "32pt Arial", "125", 150);
+  fillStyle("red", L_UI);
+  fillRect(0, 0, 100, 100, L_UI);
+  fillStyle("white", L_UI);
+  text("Husky Engine encountered an error: " + game.loadArgs.type, "32pt Arial", 4.883, 8.681, L_UI);
+  text(game.loadArgs.msg, "32pt Arial", 6.104, 13.021, L_UI);
 };
