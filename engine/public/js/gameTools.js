@@ -1,4 +1,5 @@
 game.helpers.resize = function() {
+  game.vars._hashTime = Date.now(); // Force update of render loop
   if (!game.helpers.mobileCheck()) {
     let width  = Math.max(window.innerWidth*.8, 512);
     let height = (width/16)*9;
@@ -623,4 +624,10 @@ game.helpers.getPos = () => {
       y - (yquad-1)*(game.settings.quadrantsize/(game.settings.tilesize*game.settings.multiplier))
     ]
   };
+};
+
+game.helpers.hash = () => {
+  //return md5(JSON.stringify(_.assign(game.local, game.vars._console, {_rand: [game.vars.rand0, game.vars.rand1, game.vars.rand2, game.vars.rand3, game.vars.rand4]})));
+  //return md5(JSON.stringify(game.local));
+  return md5(JSON.stringify(_.assign(game.local, game.vars._console)));
 };

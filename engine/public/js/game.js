@@ -171,8 +171,12 @@ let game = {
       currentTime: 0,
       delta: 0,
       limit: MAX_FPS,
+      userSet: MAX_FPS,
       lastTime: Date.now(),
-      update(limit) {
+      update(limit, override=false) {
+        if (!override) {
+          game.vars._fps.userSet = limit;
+        }
         game.vars._fps.limit    = limit;
         game.vars._fps.interval = 1000/limit;
       }
@@ -188,7 +192,10 @@ let game = {
       match: ""
     },
     _mobileCheckOverride: null,
-    _reflectionStep: 0
+    _reflectionStep: 0,
+    _hash: null,
+    _hashTime: Date.now(),
+    _sleeping: false
 
   },
 
@@ -311,15 +318,24 @@ $(() => {
 */
 
 function render() {
+  if (!game.renderReady) return;
+
+  // Pass in current frame for timing logic
+  game.renderLoop = requestAnimationFrame(render);
+  if (Date.now() - game.vars._hashTime > 500 && game.vars._hash === game.helpers.hash()) {
+    game.vars._fps.update(1, true);
+    game.vars._sleeping = true;
+  } else {
+    game.vars._fps.update(game.vars._fps.userSet, true);
+    game.vars._sleeping = false;
+  }
+
   // Clear all layers
   game.animations.clear(L_UI);
   game.animations.clear(L_GAME);
 
   game.vars._info.renderLastCalled = Date.now();
-  if (!game.renderReady) return;
 
-  // Pass in current frame for timing logic
-  game.renderLoop = requestAnimationFrame(render);
   game.vars._fps.currentTime = Date.now();
   game.vars._fps.delta = (game.vars._fps.currentTime-game.vars._fps.lastTime);
 
@@ -354,9 +370,9 @@ function render() {
       let sim  = game.vars._info.sim;
       let ren  = game.vars._info.render;
 
-      if (fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange', L_UI);
-      if (fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red', L_UI);
-      text("fps:  " + fps, "24pt Arial", 0, line*1, L_UI);
+      if (!game.vars._sleeping && fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange', L_UI);
+      if (!game.vars._sleeping && fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red', L_UI);
+      text("fps:  " + fps + (game.vars._sleeping ? " (sleeping)" : ""), "24pt Arial", 0, line*1, L_UI);
       fillStyle('white', L_UI);
 
       if (sim > 1000/game.vars._info.rate) fillStyle('red', L_UI);
@@ -385,12 +401,12 @@ function render() {
 
         // Tile preview
         game.vars._info.tilePreview.ctx.clearRect(0, 0, 112, 32)
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 32, 16);
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 40, 0, 32, 16);
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 80, 0, 32, 16);
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.images['tilesheet.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 80, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 40, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 80, 0, 32, 16);
+        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 80, 0, 32, 16);
 
-        L_UI.ctx.drawImage(game.vars._info.tilePreview, 190*L_UI.scale(), 125*L_UI.scale(), 112*L_UI.scale(), 32*L_UI.scale());
+        L_UI.ctx.drawImage(game.vars._info.tilePreview, 190, 125, 112, 32);
       }
 
       fillStyle(oldFill, L_UI);
@@ -406,6 +422,11 @@ function render() {
     game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
     L_MAIN.ctx.drawImage(L_GAME.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height);
     L_MAIN.ctx.drawImage(L_UI.element,   0, 0, L_MAIN.element.width, L_MAIN.element.height);
+  }
+
+  if (game.vars._hash !== game.helpers.hash()) {
+    game.vars._hashTime = Date.now();
+    game.vars._hash = game.helpers.hash();
   }
 }
 
