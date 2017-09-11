@@ -125,27 +125,23 @@ function consoleHandler(key) {
       },
       scale: {
         action() {
-          if (command[1] === "game") {
-            let num = Number(command[2]);
-            if (command[2] === undefined) {
-              result = "Game scale is currently " + L_GAME.scale();
+          if (command[1].slice(-2) === "px") {
+            L_MAIN.element.width  = command[1].slice(0, -2);
+            L_MAIN.element.height = L_MAIN.element.width * 9/16;
+            L_MAIN.ctx.imageSmoothingEnabled = false;
+            result = "Scale changed to " + command[1];
+          } else {
+            let num = Number(command[1]);
+            if (command[1] === undefined) {
+              result = "Main scale is currently " + L_MAIN.scale();
             } else if (!Number.isNaN(num)) {
-              let old = L_GAME.scale();
-              L_GAME.scale(num);
-              result = "Game scale changed from " + old + " to " + L_GAME.scale();
-            }
-          } else if (command[1] === "ui") {
-            let num = Number(command[2]);
-            if (command[2] === undefined) {
-              result = "UI scale is currently " + L_UI.scale();
-            } else if (!Number.isNaN(num)) {
-              let old = L_UI.scale();
-              L_UI.scale(num);
-              result = "UI scale changed from " + old + " to " + L_UI.scale();
+              let old = L_MAIN.scale();
+              L_MAIN.scale(num);
+              result = "Main scale changed from " + old + " to " + L_MAIN.scale();
             }
           }
         },
-        man: `Change the scale of ui/game layers`
+        man: `Change the scale of main layer`
       },
       showinfo: {
         action() {
@@ -225,13 +221,11 @@ function consoleHandler(key) {
           let mode = Number((command[1] || 0));
           if (mode === 1) {
             game.local.reflection = true;
-            game.local.reflectionWaver = false;
-          } else if (mode === 2) {
-            game.local.reflection = true;
-            game.local.reflectionWaver = true;
           } else {
             game.local.reflection = false;
+            game.map.reflections = [];
           }
+          game.helpers.loadMap(game.map.name);
           result = mode;
         },
         man: `Enable reflections`

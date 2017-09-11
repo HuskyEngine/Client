@@ -55,7 +55,12 @@ game.helpers.resize = function() {
     $('#landscape').hide();
   }
 
-  //L_UI.scale(window.innerWidth/2048)
+  if (L_MAIN !== undefined) {
+    L_MAIN.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
+    L_MAIN.element.height  = ~~L_MAIN.element.style.height.slice(0, -2);
+  }
+
+  //L_MAIN.scale(window.innerWidth/2048)
 };
 
 game.helpers.mobileCheck = function() {
@@ -525,9 +530,6 @@ game.helpers.loadMap = (map, cb=()=>{}) => {
 
 // Generates quadrant matrix to write map src to
 game.helpers.gridify = () => {
-  let tilesize = 16
-  let quadsize = 1024;
-  let multiplier = 4;
   let tilesper = 16;
 
   // Get dimensions of map source
@@ -563,9 +565,6 @@ game.helpers.gridify = () => {
 };
 
 game.helpers.generateQuadrants = (done) => {
-  let tilesize = 16;
-  let quadsize = 256 * L_GAME.scale();
-  let multiplier = 4;
   let tilesper = 16;
 
   for (let i = 0; i < game.map.grid.length; i++) {

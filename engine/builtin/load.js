@@ -159,7 +159,7 @@ game.scripts.render = (frame) => {
 
   alpha(game.local.huskyAlpha, L_UI);
   alpha(game.local.fadeAway, L_UI);
-  drawImage('huskyengine', (L_UI.element._width/2-((game.local.huskySize)/2))*L_UI.scale(), (L_UI.element._height/2-((game.local.huskySize)/2)-200+((game.local.huskySize)/4))*L_UI.scale(), (game.local.huskySize*L_UI.scale()), (game.local.huskySize*L_UI.scale()), L_UI);
+  drawImage('huskyengine', (L_UI.element.width/2-((game.local.huskySize)/2)), (L_UI.element.height/2-((game.local.huskySize)/2)-200+((game.local.huskySize)/4)), (game.local.huskySize), (game.local.huskySize), L_UI);
 
   alpha(game.local.engineAlpha, L_UI);
   alpha(game.local.fadeAway, L_UI);

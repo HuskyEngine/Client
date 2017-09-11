@@ -90,24 +90,7 @@ let game = {
       },
       rect:    null,
       width:   0,
-      height:  0,
-      _scale:   1,
-      scale(val) {
-        if (val === undefined) return this._scale;
-        else {
-          // Save original vals
-          if (this.element._height === undefined) {
-            this.element._height = this.element.height;
-            this.element._width = this.element.width;
-          }
-          this._scale = val;
-          //this.element.height = this.element._height * this._scale;
-          //this.element.width  = this.element._width * this._scale;
-          this.ctx.imageSmoothingEnabled = false;
-          game.helpers.loadMap(game.map.name);
-          return this._scale;
-        }
-      }
+      height:  0
     },
     ui:   {
       ctx:     null,
@@ -120,23 +103,7 @@ let game = {
       },
       rect:    null,
       width:   0,
-      height:  0,
-      _scale:   1,
-      scale(val) {
-        if (val === undefined) return this._scale;
-        else {
-          // Save original vals
-          if (this.element._height === undefined) {
-            this.element._height = this.element.height;
-            this.element._width = this.element.width;
-          }
-          this._scale = val;
-          this.element.height = this.element._height * this._scale;
-          this.element.width  = this.element._width * this._scale;
-          this.ctx.imageSmoothingEnabled = false;
-          return this._scale;
-        }
-      }
+      height:  0
     }
   },
 
@@ -248,6 +215,9 @@ $.get('config', (data) => {
 });
 
 $(() => {
+  // Resize on first load to properly init canvas
+  game.helpers.resize();
+
   // Remove 300ms delay on mobile devices
   FastClick.attach(document.body);
 
@@ -255,9 +225,13 @@ $(() => {
   // Don't allow scrolling on mobile
   $(document).bind('touchmove', false);
 
-  // Set up main canvas references
   L_MAIN = game.canvas;
   L_MAIN.element = $("#canvas")[0];
+
+  // Apply main canvas settings
+  L_MAIN.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
+  L_MAIN.element.height  = ~~L_MAIN.element.style.height.slice(0, -2);
+
   L_MAIN.ctx     = L_MAIN.element.getContext('2d');
   L_MAIN.rect    = L_MAIN.element.getBoundingClientRect();
   L_MAIN.name    = "main";
@@ -270,7 +244,6 @@ $(() => {
   L_GAME.ctx     = L_GAME.element.getContext('2d');
   L_GAME.rect    = L_GAME.element.getBoundingClientRect();
   L_GAME.name    = "game";
-  L_GAME.scale(1);
 
   L_UI = game.layers.ui;
   L_UI.element = document.createElement("canvas");
@@ -279,12 +252,7 @@ $(() => {
   L_UI.ctx     = L_UI.element.getContext('2d');
   L_UI.rect    = L_UI.element.getBoundingClientRect();
   L_UI.name    = "UI";
-  L_UI.scale(1);
 
-  // Apply main canvas settings
-  L_MAIN.element.width  = 2048;
-  L_MAIN.element.height = 1152;
-  L_MAIN.scale(1);
 
   // Keep things pixelated
   L_MAIN.ctx.imageSmoothingEnabled = false;
@@ -326,9 +294,6 @@ $(() => {
     game.helpers.updateKeys(e, true);
   }, false);
   ///////////////////
-
-  // Resize on first load to properly init canvas
-  game.helpers.resize();
 
   // Run resize on orientation change and window resize events
   window.addEventListener('resize',            game.helpers.resize);

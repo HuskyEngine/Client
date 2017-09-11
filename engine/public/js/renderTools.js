@@ -4,14 +4,14 @@ let debug = false;
 function text(text, info, x, y, canvas=L_MAIN) {
   let size;
   if (typeof info === "object") {
-    canvas.ctx.font = `${info.size*canvas.scale()}pt ${info.font}`;
+    canvas.ctx.font = `${info.size}pt ${info.font}`;
     size = info.size;
   } else if (typeof info === "number") {
-    canvas.ctx.font = info*canvas.scale() + "pt " + game.vars.defaultFont;
+    canvas.ctx.font = info + "pt " + game.vars.defaultFont;
     size = info;
   } else {
     let ind = info.indexOf('pt');
-    info = info.slice(0, ind)*canvas.scale() + info.slice(ind);
+    info = info.slice(0, ind) + info.slice(ind);
     canvas.ctx.font = info;
     size = info;
   }
