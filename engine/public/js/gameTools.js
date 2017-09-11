@@ -525,7 +525,7 @@ game.helpers.loadMap = (map, cb=()=>{}) => {
     });
   })
   .fail((data) => {
-    console.log('failure');
+    game.helpers.load('error', {type: "MAP_NOT_FOUND", msg: `Attempt to load map "${map}" failed.`});
   });
 };
 
