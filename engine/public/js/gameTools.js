@@ -237,6 +237,25 @@ game.helpers.loadAnimation = (name, path, cb) => {
   }
 };
 
+game.helpers.loadTilesheet = (name, path, cb) => {
+  game.assets.tilesheets[name] = new Image();
+  game.assets.tilesheets[name].src = "tilesheets/" + path;
+  game.assets.tilesheets[name].onload = () => loadTilesheetInfo(name, cb);
+  game.assets.tilesheets[name].onerror = () => {
+    game.helpers.load('error', {type: "TILESHEET_NOT_FOUND", msg: `Error loading tilesheet "${name}"(${path})`});
+  };
+
+  function loadTilesheetInfo(name, cb) {
+    $.get(`tilesheets/${name}.json`)
+    .done((data) => {
+      game.assets.tilesheets[name].info = data;
+      cb();
+    }).fail((data) => {
+      game.helpers.load('error', {type: "TILESHEET_INFO_NOT_FOUND", msg: `Error loading tilesheet info "${name}"(${path})`});
+    });
+  }
+};
+
 game.helpers.loadSound = (name, path, cb) => {
   game.assets.sounds[name] = new buzz.sound("sounds/" + path);
   game.assets.sounds[name].bind("loadstart", () => {
@@ -403,6 +422,7 @@ game.helpers.loadAssets = (done=undefined) => {
   let images     = [];
   let sprites    = [];
   let animations = [];
+  let tilesheets = [];
 
   // Load image assets
   async.series([
@@ -414,7 +434,8 @@ game.helpers.loadAssets = (done=undefined) => {
         images     = raw.images;
         sprites    = raw.sprites;
         animations = raw.animations;
-        game.local.totalFiles = images.length + sprites.length + animations.length;
+        tilesheets = raw.tilesheets;
+        game.local.totalFiles = images.length + sprites.length + animations.length + tilesheets.length;
         cb();
       });
     },
@@ -429,7 +450,7 @@ game.helpers.loadAssets = (done=undefined) => {
 
     // Load all images
     cb => {
-      async.eachLimit(images, 10, (file, loaded) => {
+      async.eachLimit(images, 5, (file, loaded) => {
         game.helpers.loadImg(file, file, () => {
           game.local.fileName = file;
           game.local.filesLoaded++;
@@ -440,7 +461,7 @@ game.helpers.loadAssets = (done=undefined) => {
 
     // Load all sprites
     cb => {
-      async.eachLimit(sprites, 10, (file, loaded) => {
+      async.eachLimit(sprites, 5, (file, loaded) => {
         game.helpers.loadSprite(file, file, () => {
           game.local.fileName = file;
           game.local.filesLoaded++;
@@ -451,8 +472,19 @@ game.helpers.loadAssets = (done=undefined) => {
 
     // Load all animations
     cb => {
-      async.eachLimit(animations, 10, (file, loaded) => {
+      async.eachLimit(animations, 5, (file, loaded) => {
         game.helpers.loadAnimation(file, file, () => {
+          game.local.fileName = file;
+          game.local.filesLoaded++;
+          loaded();
+        });
+      }, cb);
+    },
+
+    // Load all tilesheets
+    cb => {
+      async.eachLimit(tilesheets, 5, (file, loaded) => {
+        game.helpers.loadTilesheet(file, file, () => {
           game.local.fileName = file;
           game.local.filesLoaded++;
           loaded();
@@ -542,20 +574,22 @@ game.helpers.generateQuadrants = (done) => {
 
       // Create new Canvas offscreen
       game.map.quadrants[i][j] = document.createElement("canvas");
-      game.map.quadrants[i][j].width = game.settings.quadrantsize
-      game.map.quadrants[i][j].height = game.settings.quadrantsize
-      game.map.quadrants[i][j].style.width = game.settings.quadrantsize + "px"
-      game.map.quadrants[i][j].style.height = game.settings.quadrantsize + "px"
-      var gridContext = game.map.quadrants[i][j].getContext('2d');
+      game.map.quadrants[i][j].width = 256
+      game.map.quadrants[i][j].height = 256
+      game.map.quadrants[i][j].style.width = 256 + "px"
+      game.map.quadrants[i][j].style.height = 256 + "px"
+      let grid = game.map.quadrants[i][j];
+      let gridContext = grid.getContext('2d');
+      grid.ctx = gridContext;
       gridContext.imageSmoothingEnabled = false;
 
       let slice = game.map.grid[i][j];
       for (let k = 0; k < slice.length; k++) {
         for (let l = 0; l < slice[0].length; l++) {
           let tile = slice[k][l]
-          if ([421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) === -1) {
-            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*16*L_GAME.scale(), k*16*L_GAME.scale(), 16*L_GAME.scale(), 16*L_GAME.scale());
-            gridContext.drawImage(game.assets.images['tilesheet.png'], (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*16*L_GAME.scale(), k*16*L_GAME.scale(), 16*L_GAME.scale(), 16*L_GAME.scale());
+          if (game.local.reflection === false || [421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) === -1) {
+            drawTile('default.png', (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
+            drawTile('default.png', (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
           } else {
             game.map.reflections.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile});
           }

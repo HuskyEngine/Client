@@ -26,6 +26,7 @@ app.use('/maps', express.static(path.join(__dirname, '..', 'maps')));
 app.use('/img', express.static(path.join(__dirname, '..', 'assets/images')));
 app.use('/sprites', express.static(path.join(__dirname, '..', 'assets/sprites')));
 app.use('/animations', express.static(path.join(__dirname, '..', 'assets/animations')));
+app.use('/tilesheets', express.static(path.join(__dirname, '..', 'assets/tilesheets')));
 app.use('/fonts', express.static(path.join(__dirname, '..', 'assets/fonts')));
 app.use('/apple-touch-icon.png', express.static(path.join(__dirname, '..', 'reverselogo.png')));
 

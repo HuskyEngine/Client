@@ -1,7 +1,7 @@
 const MAX_FPS = 0;
-let L_MAIN;
-let L_GAME;
-let L_UI;
+let L_MAIN;   // Off screen canvas
+let L_GAME;   // Games tiles
+let L_UI;     // UI/Text elements
 
 // Game namespace object
 let game = {
@@ -11,7 +11,8 @@ let game = {
     animations: {},
     sprites:    {},
     sounds:     {},
-    images:     {}
+    images:     {},
+    tilesheets: {},
   },
 
   // Cache game scenes (WIP)

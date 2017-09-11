@@ -233,6 +233,35 @@ function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, d
   }
 }
 
+function drawTile(tilesheet, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, dWidth=null, dHeight=null, canvas=L_MAIN) {
+  if (typeof tilesheet === "string") {
+    tilesheet = game.assets.tilesheets[tilesheet];
+  }
+
+  if (tilesheet === undefined) {
+    game.helpers.load('error', {type: "IMAGE_NOT_FOUND", msg: `Attempt to draw image "${tilesheet}" failed.`});
+  }
+
+  if (sHeight === null) {
+    // Default canvas
+    if (sWidth === null) {
+      canvas.ctx.drawImage(tilesheet, sx, sy);
+    } else {
+      sWidth.ctx.drawImage(tilesheet, sx, sy);
+    }
+
+  } else if (dy === null) {
+    // Default canvas
+    if (dx === null) {
+      canvas.ctx.drawImage(tilesheet, sx, sy, sWidth, sHeight);
+    } else {
+      dx.ctx.drawImage(tilesheet, sx, sy, sWidth, sHeight);
+    }
+  } else {
+    canvas.ctx.drawImage(tilesheet, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+  }
+}
+
 function drawAnimation(image, dx, dy, frame, canvas=L_MAIN) {
   if (dx === "center") dx = canvas.element.width/2;
   if (dy === "center") dy = canvas.element.height/2;
