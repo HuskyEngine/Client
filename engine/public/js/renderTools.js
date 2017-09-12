@@ -98,6 +98,53 @@ function fillRect(x1, y1, x2, y2, canvas=L_MAIN) {
   canvas.ctx.fillRect(x1, y1, x2, y2);
 }
 
+function clearRect(x1, y1, x2, y2, canvas=L_MAIN) {
+  let xCenter = canvas.element.width/2;
+  let yCenter = canvas.element.height/2;
+
+  // X1
+  // Center
+  if (x1 === "center") x1 = xCenter;
+  // Specific px
+  else if (typeof x1 === "string" && x1.slice(-2) === "px") x1 = Number(x1.slice(0, -2).trim());
+  // Percentage
+  else x1 = Number(x1) * .01 * canvas.element.width;
+  // If X is invalid, default to center
+  if (Number.isNaN(x1)) x1 = xCenter;
+
+  // X2
+  // Center
+  if (x2 === "center") x2 = xCenter;
+  // Specific px
+  else if (typeof x2 === "string" && x2.slice(-2) === "px") x2 = Number(x2.slice(0, -2).trim());
+  // Percentage
+  else x2 = Number(x2) * .01 * canvas.element.width;
+  // If X is invalid, default to center
+  if (Number.isNaN(x2)) x2 = xCenter;
+
+  // Y1
+  // Center
+  if (y1 === "center") y1 = yCenter;
+  // Specific px
+  else if (typeof y1 === "string" && y1.slice(-2) === "px") y1 = Number(y1.slice(0, -2).trim());
+  // Percentage
+  else y1 = Number(y1) * .01 * canvas.element.height;
+  // If Y is invalid, default to center
+  if (Number.isNaN(y1)) y1 = yCenter;
+
+  // Y2
+  // Center
+  if (y2 === "center") y2 = yCenter;
+  // Specific px
+  else if (typeof y2 === "string" && y2.slice(-2) === "px") y2 = Number(y2.slice(0, -2).trim());
+  // Percentage
+  else y2 = Number(y2) * .01 * canvas.element.height;
+  // If Y is invalid, default to center
+  if (Number.isNaN(y2)) y2 = yCenter;
+
+  canvas.ctx.clearRect(x1, y1, x2, y2);
+}
+
 function input(name, info, maxlen, x, y, password=false, canvas=L_MAIN) {
   let size;
   if (typeof info === "object") {

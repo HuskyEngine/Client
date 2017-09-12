@@ -46,8 +46,6 @@ let game = {
       height: 1
     },
     rect:    null,
-    width:   0,
-    height:  0,
     _scale:   1,
     scale(val) {
       if (val === undefined) return this._scale;
@@ -63,11 +61,7 @@ let game = {
         this.ctx.imageSmoothingEnabled = false;
         return this._scale;
       }
-    },
-
-    // Real width/height of canvas
-    rwidth:  0,
-    rheight: 0
+    }
   },
 
   // Helper functions
@@ -82,28 +76,12 @@ let game = {
     game: {
       ctx:     null,
       element: null,
-
-      // Determine scale for buttons and UI elements
-      mult: {
-        width:  1,
-        height: 1
-      },
       rect:    null,
-      width:   0,
-      height:  0
     },
     ui:   {
       ctx:     null,
       element: null,
-
-      // Determine scale for buttons and UI elements
-      mult: {
-        width:  1,
-        height: 1
-      },
       rect:    null,
-      width:   0,
-      height:  0
     }
   },
 
@@ -195,7 +173,8 @@ let game = {
     _reflectionStep: 0,
     _hash: null,
     _hashTime: Date.now(),
-    _sleeping: false
+    _sleeping: false,
+    _controlsHash: null
 
   },
 
@@ -330,10 +309,6 @@ function render() {
     game.vars._sleeping = false;
   }
 
-  // Clear all layers
-  game.animations.clear(L_UI);
-  game.animations.clear(L_GAME);
-
   game.vars._info.renderLastCalled = Date.now();
 
   game.vars._fps.currentTime = Date.now();
@@ -358,6 +333,7 @@ function render() {
       let oldAlpha = alpha(L_UI);
       let oldFill  = fillStyle(L_UI);
 
+      clearRect(0, 0, 39.5, 21.7, L_UI);
       alpha(.6, L_UI);
       fillStyle('black', L_UI);
       fillRect(0, 0, 39.5, 21.7, L_UI);
@@ -415,13 +391,13 @@ function render() {
 
     game.vars._fps.lastTime = game.vars._fps.currentTime - (game.vars._fps.delta % game.vars._fps.interval);
 
-    // Display Console
-    consoleDisplay();
-
     game.vars._info.lastFrameCalled = Date.now();
     game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
     L_MAIN.ctx.drawImage(L_GAME.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height);
     L_MAIN.ctx.drawImage(L_UI.element,   0, 0, L_MAIN.element.width, L_MAIN.element.height);
+
+    // Display Console
+    consoleDisplay();
   }
 
   if (game.vars._hash !== game.helpers.hash()) {

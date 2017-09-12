@@ -115,6 +115,11 @@ game.helpers.load = (name, args={}) => {
       clearTimeout(timeout);
     });
 
+    // Clear all layers and scopes
+    game.animations.clear(L_GAME);
+    game.animations.clear(L_UI);
+    game.animations.clear(L_MAIN);
+
     // Remove old button events
     game.ee.removeListener('touch',   game.scripts.onTouch);
     game.ee.removeListener('tap',     game.scripts.onTap);
@@ -630,4 +635,60 @@ game.helpers.hash = () => {
   //return md5(JSON.stringify(_.assign(game.local, game.vars._console, {_rand: [game.vars.rand0, game.vars.rand1, game.vars.rand2, game.vars.rand3, game.vars.rand4]})));
   //return md5(JSON.stringify(game.local));
   return md5(JSON.stringify(_.assign(game.local, game.vars._console)));
+};
+
+game.helpers.scope = (name, width=2048, height=1152) => {
+  if (game.scopes[name] !== undefined) return game.scopes[name];
+
+  let scope = {
+    ctx:     null,
+    element: document.createElement("canvas"),
+    rect:    null
+  };
+
+  scope.element.width  = width;
+  scope.element.height = height;
+  scope.ctx   = scope.element.getContext('2d');
+  scope.rect  = scope.element.getBoundingClientRect();
+  scope.name  = name;
+
+  game.scopes[name] = scope;
+  return scope;
+};
+
+game.helpers.renderControls = () => {
+  let L_CONTROLS = game.helpers.scope('controls');
+  let hash = md5(JSON.stringify(_.assign(game.button.held, game.key.held)));
+  if (hash === game.vars._controlsHash) return;
+
+  game.vars._controlsHash = hash;
+
+  game.animations.clear(L_CONTROLS);
+
+  // Restore transparency
+  alpha(0.35, L_CONTROLS);
+
+  // A button
+  alpha((game.button.held.a || game.key.held.a) ? 1 : 0.35, L_CONTROLS);
+  drawImage("buttons/a.svg", 1700, 600, 200, 200, L_CONTROLS);
+
+  // B button
+  alpha((game.button.held.b || game.key.held.b) ? 1 : 0.35, L_CONTROLS);
+  drawImage("buttons/b.svg", 1500, 800, 200, 200, L_CONTROLS);
+
+  // Dpad Controls
+  alpha((game.button.held.up || game.key.held.ArrowUp) ? 1 : 0.35, L_CONTROLS);
+  drawImage("buttons/up.svg", 340, 570, 104, 148, L_CONTROLS);
+
+  alpha((game.button.held.right || game.key.held.ArrowRight) ? 1 : 0.35, L_CONTROLS);
+  drawImage("buttons/right.svg", 454, 728, 148, 104, L_CONTROLS);
+
+  alpha((game.button.held.down || game.key.held.ArrowDown) ? 1 : 0.35, L_CONTROLS);
+  drawImage("buttons/down.svg", 340, 842, 104, 148, L_CONTROLS);
+
+  alpha((game.button.held.left || game.key.held.ArrowLeft) ? 1 : 0.35, L_CONTROLS);
+  drawImage("buttons/left.svg", 182, 728, 148, 104, L_CONTROLS);
+
+  // Restore transparency
+  alpha(0.35, L_CONTROLS);
 };

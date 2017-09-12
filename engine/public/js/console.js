@@ -1,3 +1,5 @@
+let L_CONSOLE = game.helpers.scope('console');
+
 function consoleHandler(key) {
   if (game.vars._console.display) {
     if (game.vars._console.history.length > 0) {
@@ -270,6 +272,7 @@ function consoleHandler(key) {
 
   // Toggle console
   if (key === "Escape") {
+    game.animations.clear(L_CONSOLE);
     game.vars._console.display = !game.vars._console.display;
     let val = game.settings.holdDelay;
 
@@ -285,31 +288,33 @@ function consoleHandler(key) {
 
 function consoleDisplay() {
   if (game.vars._console.display) {
-    let oldAlpha = alpha(L_UI);
-    let oldFill  = fillStyle(L_UI);
+    game.animations.clear(L_CONSOLE);
+    let oldAlpha = alpha(L_CONSOLE);
+    let oldFill  = fillStyle(L_CONSOLE);
 
-    alpha(0.5, L_UI);
-    fillStyle('black', L_UI);
-    fillRect(0, 0, L_UI.element.width, L_UI.element.height, L_UI);
-    fillStyle('white', L_UI);
-    alpha(1, L_UI);
+    alpha(0.5, L_CONSOLE);
+    fillStyle('black', L_CONSOLE);
+    fillRect(0, 0, L_CONSOLE.element.width, L_CONSOLE.element.height, L_CONSOLE);
+    fillStyle('white', L_CONSOLE);
+    alpha(1, L_CONSOLE);
 
     let linenum = 0;
     let content = "Husky Engine v0.0.1 > " + game.vars._console.content;
-    text(content, "24pt Arial", 0, 2.5*(linenum+1), L_UI);
+    text(content, "24pt Arial", 0, 2.5*(linenum+1), L_CONSOLE);
 
     // Show partial match
     if (game.vars._console.match !== "") {
-      fillStyle('#AAA', L_UI);
-      text(game.vars._console.match, "24pt Arial", L_UI.ctx.measureText(content).width + "px", 2.5*(linenum+1), L_UI);
-      fillStyle('white', L_UI);
+      fillStyle('#AAA', L_CONSOLE);
+      text(game.vars._console.match, "24pt Arial", L_CONSOLE.ctx.measureText(content).width + "px", 2.5*(linenum+1), L_CONSOLE);
+      fillStyle('white', L_CONSOLE);
     }
 
     game.vars._console.log.forEach((line) => {
-      text(line, "24pt Arial", 0, 2.5*(++linenum+2), L_UI);
+      text(line, "24pt Arial", 0, 2.5*(++linenum+2), L_CONSOLE);
     });
 
-    fillStyle(oldFill, L_UI);
-    alpha(oldAlpha, L_UI);
+    fillStyle(oldFill, L_CONSOLE);
+    alpha(oldAlpha, L_CONSOLE);
+    drawImage(L_CONSOLE.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height, L_MAIN);
   }
 }
