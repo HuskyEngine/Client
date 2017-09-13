@@ -61,6 +61,7 @@ function consoleHandler(key) {
       hideinfo: {
         action() {
             game.vars._info.showInfo = false;
+            game.animations.clear(L_UI);
             result = "true";
         },
         man: `Hides info.`
