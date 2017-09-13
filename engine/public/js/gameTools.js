@@ -631,6 +631,16 @@ game.helpers.getPos = () => {
   };
 };
 
+game.helpers.getBounds = () => {
+  let pos = game.helpers.getPos();
+  return {
+    x1: pos.x-16,
+    y1: pos.y-9,
+    x2: pos.x+15,
+    y2: pos.y+8
+  };
+};
+
 game.helpers.quadToCoord = (quad) => {
   let x = (quad[0]-1)*16+quad[2];
   let y = (quad[1]-1)*16+quad[3];
