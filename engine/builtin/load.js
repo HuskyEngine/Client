@@ -20,6 +20,7 @@ game.scripts.init = (cb) => {
   game.local.elapsed = () => Date.now() - game.local.start;
   game.helpers.scope('console');
   game.helpers.scope('controls');
+  game.helpers.scope('reflection', 192, 192);
   cb();
 };
 

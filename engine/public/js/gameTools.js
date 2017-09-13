@@ -516,7 +516,7 @@ game.helpers.loadMap = (map, cb=()=>{}) => {
     src:  null,
     grid: [],
     quadrants: [],
-    reflections: [],
+    reflections: {},
     cover: [],
     coverTiles: [625, 577, 593, 609, 608, 592, 533, 560, 561, 570, 571, 586, 587, 568, 569, 584, 585, 864, 865, 866, 867, 868, 644, 645, 646, 647, 725, 726, 727, 720, 721, 722, 723, 724, 656, 657, 658, 659, 1272, 1273, 1274, 1275, 1276]
   };
@@ -592,12 +592,12 @@ game.helpers.generateQuadrants = (done) => {
       for (let k = 0; k < slice.length; k++) {
         for (let l = 0; l < slice[0].length; l++) {
           let tile = slice[k][l]
-          if (game.local.reflection === false || [421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) === -1) {
-            drawTile('default.png', (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
-            drawTile('default.png', (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
-          } else {
-            game.map.reflections.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile});
+          if (game.local.reflection !== false && [421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) !== -1) {
+            let coord = game.helpers.quadToCoord([i+1, j+1, l+1, k+1]);
+            game.map.reflections[`${coord.x-1}.${coord.y}`] = tile
           }
+          drawTile('default.png', (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
+          drawTile('default.png', (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
 
           if (game.map.coverTiles.indexOf(tile[1]) !== -1) {
             game.map.cover.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile[1]});
@@ -631,6 +631,23 @@ game.helpers.getPos = () => {
   };
 };
 
+game.helpers.quadToCoord = (quad) => {
+  let x = (quad[0]-1)*16+quad[2];
+  let y = (quad[1]-1)*16+quad[3];
+  return {
+    x,
+    y
+  };
+};
+
+game.helpers.coordToQuad = (coord) => {
+  let quad_x = Math.floor(coord[0]/16)+1;
+  let x = coord[0]%16;
+  let quad_y = Math.floor(coord[1]/16)+1;
+  let y = coord[1]%16;
+  return [quad_x, quad_y, x, y];
+};
+
 game.helpers.hash = () => {
   //return md5(JSON.stringify(_.assign(game.local, game.vars._console, {_rand: [game.vars.rand0, game.vars.rand1, game.vars.rand2, game.vars.rand3, game.vars.rand4]})));
   //return md5(JSON.stringify(game.local));
@@ -649,6 +666,7 @@ game.helpers.scope = (name, width=2048, height=1152) => {
   scope.element.width  = width;
   scope.element.height = height;
   scope.ctx   = scope.element.getContext('2d');
+  scope.ctx.imageSmoothingEnabled = false;
   scope.rect  = scope.element.getBoundingClientRect();
   scope.name  = name;
 
