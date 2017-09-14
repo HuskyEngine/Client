@@ -75,7 +75,6 @@ game.helpers.mobileCheck = function() {
 };
 
 game.helpers.load = (name, args={}) => {
-  window.cancelAnimationFrame(game.renderLoop);
   // Reset logic and render ready status while loading new scene
   game.logicReady  = false;
   game.renderReady = false;

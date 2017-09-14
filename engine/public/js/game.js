@@ -142,7 +142,8 @@ let game = {
       lastFrameCalled: Date.now(),
       lastCalled: Date.now(),
       lastFrameCount: 0,
-      tilePreview: document.createElement("canvas")
+      tilePreview: document.createElement("canvas"),
+      lastCancel: Date.now()
     },
 
     _fps: {
@@ -318,6 +319,10 @@ function render() {
   game.vars._fps.currentTime = Date.now();
   game.vars._fps.delta = (game.vars._fps.currentTime-game.vars._fps.lastTime);
 
+  if (game.vars._script !== "load" && Date.now() - game.vars._info.lastCancel > 3000 && game.vars._info.fps > game.vars._info.rate*1.1) {
+    window.cancelAnimationFrame(game.renderLoop);
+    game.vars._info.lastCancel = Date.now();
+  }
   if ((game.vars._fps.limit !== 0 && game.vars._fps.delta > game.vars._fps.interval) || game.vars._fps.limit === 0) nextFrame();
 
   function nextFrame() {
@@ -352,6 +357,7 @@ function render() {
 
       if (!game.vars._sleeping && fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange', L_UI);
       if (!game.vars._sleeping && fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red', L_UI);
+
       text("fps:  " + fps + (game.vars._sleeping ? " (sleeping)" : ""), "24pt Arial", 0, line*1, L_UI);
       fillStyle('white', L_UI);
 
