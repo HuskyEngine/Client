@@ -283,7 +283,11 @@ $(() => {
 
   // Run resize on orientation change and window resize events
   window.addEventListener('resize',            game.helpers.resize);
-  window.addEventListener('orientationchange', game.helpers.resize);
+  window.addEventListener('orientationchange', (event) => {
+    setTimeout(() => {
+      game.helpers.resize();
+    }, 250);
+  });
 
   // Load the load scene first
   // Load will get assets ready, perform checks, show powered by husky engine, etc.
