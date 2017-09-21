@@ -90,7 +90,7 @@ let game = {
 
   // Logic loop
   logicFrame:  0,
-  logicLoop:   null,
+  logicLoop:   undefined,
   logicReady:  false,
 
   // Map data
@@ -106,7 +106,7 @@ let game = {
 
   // Render loop
   renderFrame: 0,
-  renderLoop:  null,
+  renderLoop:  undefined,
   renderReady: false,
 
   // Hold all canvases that are to be saved and reused
@@ -286,6 +286,8 @@ $(() => {
   // Load the load scene first
   // Load will get assets ready, perform checks, show powered by husky engine, etc.
   game.helpers.load();
+
+  logic();
 });
 
 /* Order of execution
@@ -409,86 +411,106 @@ function render() {
   }
 }
 
-game.logicLoop = setInterval(() => {
-  game.vars._info.simLastCalled = Date.now();
-  if (!game.logicReady) return;
+function logic() {
+  if (game.logicLoop !== undefined) return;
 
-  let holdDelay = game.settings.holdDelay;
+  game.logicLoop = setInterval(() => {
+    game.vars._info.simLastCalled = Date.now();
+    if (!game.logicReady) return;
 
-  // Logic loop 1st pass is complete, render loop is now ready
-  if (game.logicFrame === 2) {
-    game.renderReady = true;
-    render();
-  }
+    let holdDelay = game.settings.holdDelay;
 
-  // Buttons
-  _.each(game.button.data, (data, button) => {
-
-    // Touch event
-    // Emit touch event the instant a touch is detected
-    if (!game.button.data[button].touched) {
-
-      // Set touched flag so it only emits once
-      game.button.data[button].touched = true;
-      game.ee.emit('touch', button);
+    // Logic loop 1st pass is complete, render loop is now ready
+    if (game.logicFrame === 2) {
+      game.renderReady = true;
+      render();
     }
 
-    // Hold event if holdDelay threshold is met
-    if (game.button.held[button] !== undefined && Date.now() - game.button.data[button].start > holdDelay) {
-      game.ee.emit('hold', button);
-    }
-  });
+    // Buttons
+    _.each(game.button.data, (data, button) => {
 
-  // Keys
-  _.each(game.key.data, (data, key) => {
+      // Touch event
+      // Emit touch event the instant a touch is detected
+      if (!game.button.data[button].touched) {
 
-    // Touch event
-    // Emit touch event the instant a touch is detected
-    if (!game.key.data[key].touched) {
-
-      // Set touched flag so it only emits once
-      game.key.data[key].touched = true;
-      consoleHandler(key);
-
-      // Don't let console input leak through when opened
-      if (!game.vars._console.display) {
-        game.ee.emit('keyTouch', key);
+        // Set touched flag so it only emits once
+        game.button.data[button].touched = true;
+        game.ee.emit('touch', button);
       }
-    }
 
-    // Hold event if holdDelay threshold is met
-    if (game.key.held[key] !== undefined && Date.now() - game.key.data[key].start > holdDelay) {
-      consoleHandler(key);
-
-      // Don't let console input leak through when opened
-      if (!game.vars._console.display) {
-        game.ee.emit('keyHold', key);
+      // Hold event if holdDelay threshold is met
+      if (game.button.held[button] !== undefined && Date.now() - game.button.data[button].start > holdDelay) {
+        game.ee.emit('hold', button);
       }
+    });
+
+    // Keys
+    _.each(game.key.data, (data, key) => {
+
+      // Touch event
+      // Emit touch event the instant a touch is detected
+      if (!game.key.data[key].touched) {
+
+        // Set touched flag so it only emits once
+        game.key.data[key].touched = true;
+        consoleHandler(key);
+
+        // Don't let console input leak through when opened
+        if (!game.vars._console.display) {
+          game.ee.emit('keyTouch', key);
+        }
+      }
+
+      // Hold event if holdDelay threshold is met
+      if (game.key.held[key] !== undefined && Date.now() - game.key.data[key].start > holdDelay) {
+        consoleHandler(key);
+
+        // Don't let console input leak through when opened
+        if (!game.vars._console.display) {
+          game.ee.emit('keyHold', key);
+        }
+      }
+    });
+
+    // Pass in logic frame for timing
+    game.scripts.logic(++game.logicFrame);
+
+    game.vars._reflectionStep++;
+
+    if (game.vars._reflectionStep % 30 === 0) {
+      game.vars.rand0 = getRandomIntInclusive(-2,2);
+    } else if (game.vars._reflectionStep % 30 === 5) {
+      game.vars.rand3 = getRandomIntInclusive(-2,2);
+    } else if (game.vars._reflectionStep % 30 === 10) {
+      game.vars.rand2 = getRandomIntInclusive(-2,2);
+    } else if (game.vars._reflectionStep % 30 === 15) {
+      game.vars.rand4 = getRandomIntInclusive(-2,2);
+    } else if (game.vars._reflectionStep % 30 === 20) {
+      game.vars.rand1 = getRandomIntInclusive(-2,2);
     }
-  });
 
-  // Pass in logic frame for timing
-  game.scripts.logic(++game.logicFrame);
-
-  game.vars._reflectionStep++;
-
-  if (game.vars._reflectionStep % 30 === 0) {
-    game.vars.rand0 = getRandomIntInclusive(-2,2);
-  } else if (game.vars._reflectionStep % 30 === 5) {
-    game.vars.rand3 = getRandomIntInclusive(-2,2);
-  } else if (game.vars._reflectionStep % 30 === 10) {
-    game.vars.rand2 = getRandomIntInclusive(-2,2);
-  } else if (game.vars._reflectionStep % 30 === 15) {
-    game.vars.rand4 = getRandomIntInclusive(-2,2);
-  } else if (game.vars._reflectionStep % 30 === 20) {
-    game.vars.rand1 = getRandomIntInclusive(-2,2);
-  }
-
-  game.vars._info.sim = Date.now() - game.vars._info.simLastCalled;
-}, 1000/60);
+    game.vars._info.sim = Date.now() - game.vars._info.simLastCalled;
+  }, 1000/60);
+}
 
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+}
+
+function pause() {
+  if (!(game.logicLoop || game.renderLoop)) return;
+  console.log('pausing');
+  cancelAnimationFrame(game.renderLoop);
+  clearInterval(game.logicLoop);
+  game.logicLoop  = undefined;
+  game.renderLoop = undefined;
+}
+
+function resume() {
+  if (game.logicLoop || game.renderLoop) return;
+  console.log('resuming');
+  logic();
+  render();
 }

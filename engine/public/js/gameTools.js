@@ -49,11 +49,13 @@ game.helpers.resize = function() {
 
     $('#canvas').hide();
     $('#landscape').show();
+    pause();
 
   } else {
 
     $('#canvas').show();
     $('#landscape').hide();
+    resume();
   }
 
   if (L_MAIN !== undefined) {
