@@ -71,6 +71,14 @@ game.scripts.logic = (frame) => {
   if (frame === 1) {
     game.helpers.loadAssets(() => {
       game.helpers.renderControls();
+      game.vars.filler = new Array(50).fill().map((v, i) => {
+        if (i % 2) {
+          return new Array(50).fill().map((v, i) => i % 2 ? [0,606] : [0,605]);
+        } else {
+          return new Array(50).fill().map((v, i) => i % 2 ? [0,590] : [0,589]);
+        }
+      });
+
       game.helpers.loadMap('default', () => {
         game.local.loaded = true;
       });
