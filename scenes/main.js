@@ -46,12 +46,10 @@ game.scripts.layout = {
 
 };
 
-
 // Game logic loop
 game.scripts.logic = (frame) => {
 
 };
-
 
 // Game render loop
 game.scripts.render = (frame) => {

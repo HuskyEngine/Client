@@ -522,7 +522,42 @@ game.helpers.loadMap = (map, cb=()=>{}) => {
   game.map.name = map;
   $.get(`maps/${map}.json`)
   .done((data) => {
+    /*
+    game.vars.filler = new Array(50).fill().map((v, i) => {
+      if (i % 2) {
+        return new Array(50).fill().map((v, i) => i % 2 ? [0,606] : [0,605]);
+      } else {
+        return new Array(50).fill().map((v, i) => i % 2 ? [0,590] : [0,589]);
+      }
+    });
+    */
+
+    // Fill incomplete rows
+    data = data.map((row, index) => {
+      var size = row.length - (row.length % 16) + 16;
+      let add = [];
+      while (row.length+add.length < size) {
+        if (index % 2) {
+          add.push([0,add.length % 2 ? 606 : 605]);
+        } else {
+          add.push([0,add.length % 2 ? 590 : 589]);
+        }
+      }
+      return row.concat(add);
+    });
+
+    var size = data.length - (data.length % 16) + 16;
+    // Add missing rows
+    while (data.length < size) {
+      if (data.length % 2) {
+        data.push(new Array(64).fill().map((v, i) => i % 2 ? [0,606] : [0,605]));
+      } else {
+        data.push(new Array(64).fill().map((v, i) => i % 2 ? [0,590] : [0,589]));
+      }
+    }
+
     game.map.src = data;
+
     game.map.grid = game.helpers.gridify();
     game.helpers.generateQuadrants(() => {
       cb();
@@ -604,6 +639,34 @@ game.helpers.generateQuadrants = (done) => {
         }
       }
       if (i === game.map.grid.length-1 && j === game.map.grid.length-1) {
+        // Create new Canvas offscreen
+
+        game.vars.fillerQuad = document.createElement("canvas");
+        game.vars.fillerQuad.width = 256
+        game.vars.fillerQuad.height = 256
+        game.vars.fillerQuad.style.width = 256 + "px"
+        game.vars.fillerQuad.style.height = 256 + "px"
+        let grid = game.vars.fillerQuad;
+        let gridContext = grid.getContext('2d');
+        grid.ctx = gridContext;
+        gridContext.imageSmoothingEnabled = false;
+
+        let slice = game.vars.filler;
+        for (let k = 0; k < 50; k++) {
+          for (let l = 0; l < 50; l++) {
+            let tile = slice[k][l]
+            if (game.local.reflection === false || [421,422,423,439,486,454,487,439,437,453,454,455,471,422,470,438,544,545,546,528,529,530,512,513,514].indexOf(tile[1]) === -1) {
+              drawTile('default.png', (tile[0] % 16) * 16, Math.floor(tile[0] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
+              drawTile('default.png', (tile[1] % 16) * 16, Math.floor(tile[1] / 16) * 16, 16, 16, l*16, k*16, 16, 16, grid);
+            } else {
+              game.map.reflections.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile});
+            }
+
+            if (game.map.coverTiles.indexOf(tile[1]) !== -1) {
+              game.map.cover.push({i: i+1, j: j+1, l: l+1, k: k+1, tile: tile[1]});
+            }
+          }
+        }
         done();
       }
     }
@@ -611,12 +674,13 @@ game.helpers.generateQuadrants = (done) => {
 }
 
 game.helpers.getPos = () => {
-  let x = (-game.local.x+17 || 0);
-  let y = (-game.local.y+10 || 0);
+  let x = -game.local.x+17;
+  let y = -game.local.y+10;
   let dir = (game.local.dirs && game.local.dir) ? game.local.dirs[game.local.dir] : "";
 
-  let xquad = Math.ceil((x * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize);
-  let yquad = Math.ceil((y * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize)
+  let xquad = ~~Math.ceil((x * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize);
+  let yquad = ~~Math.ceil((y * game.settings.tilesize*game.settings.multiplier) / game.settings.quadrantsize);
+
   return {
     x,
     y,
@@ -718,4 +782,20 @@ game.helpers.renderControls = () => {
 
   // Restore transparency
   alpha(0.35, L_CONTROLS);
+};
+
+game.helpers.tileAt = (x, y, valid=false) => {
+  if (game.map !== undefined && game.map.src !== null && game.map.src[y] !== undefined && game.map.src[y][x] !== undefined) {
+    return valid ? true : game.map.src[y][x]
+  } else {
+    return valid ? false : [null, null];
+  }
+};
+
+game.helpers.getQuad = (x, y, valid=false) => {
+  if (y >= 0 && y < game.map.quadrants.length && x >= 0 && x < game.map.quadrants[y].length) {
+    return valid ? true : game.map.quadrants[y][x];
+  } else {
+    return valid ? false : game.vars.fillerQuad;
+  }
 };

@@ -142,7 +142,6 @@ let game = {
       lastFrameCalled: Date.now(),
       lastCalled: Date.now(),
       lastFrameCount: 0,
-      tilePreview: document.createElement("canvas"),
       lastCancel: Date.now()
     },
 
@@ -192,13 +191,7 @@ $.get('config', (data) => {
   game.settings.tilesize = data.tilesize;
   game.settings.quadrantsize = data.quadrantsize;
 
-  game.vars._info.tilePreview.width = 112;
-  game.vars._info.tilePreview.height = data.tilesize;
-  game.vars._info.tilePreview.style.width = 112 + "px";
-  game.vars._info.tilePreview.style.height = data.tilesize + "px";
-  game.vars._info.tilePreview.ctx = game.vars._info.tilePreview.getContext('2d');
-
-  game.vars._info.tilePreview.ctx.imageSmoothingEnabled   = false;
+  game.helpers.scope('tilePreview', 112, 16);
 });
 
 $(() => {
@@ -369,10 +362,10 @@ function render() {
       text("ren: " + ren + " ms", "24pt Arial", 0, line*3, L_UI);
       fillStyle('white', L_UI);
 
-      let pos  = game.helpers.getPos();
+      let pos = game.helpers.getPos();
 
-      if (pos.x > 0 && pos.y > 0 && pos.x <= game.map.src.length && pos.y <= game.map.src[0].length) {
-        let feet = (game.map !== undefined && pos.x !== "-") ? JSON.stringify(game.map.src[pos.y-1][pos.x-1]) : "[null, null]";
+      if (game.helpers.tileAt(pos.x-1, pos.y-1, true)) {
+        let feet = game.helpers.tileAt(pos.x-1, pos.y-1);
 
         text("pos: [" + pos.x + "," + pos.y + "] [" + pos.dir + "]", "24pt Arial", 0, line*4, L_UI);
         text("feet: " + feet, "24pt Arial", 0, line*5, L_UI);
@@ -386,13 +379,13 @@ function render() {
         }
 
         // Tile preview
-        game.vars._info.tilePreview.ctx.clearRect(0, 0, 112, 32)
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 0, 0, 32, 16);
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 40, 0, 32, 16);
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][0] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][0] / 16) * 16, 16, 16, 80, 0, 32, 16);
-        game.vars._info.tilePreview.ctx.drawImage(game.assets.tilesheets['default.png'], (game.map.src[pos.y-1][pos.x-1][1] % 16) * 16, Math.floor(game.map.src[pos.y-1][pos.x-1][1] / 16) * 16, 16, 16, 80, 0, 32, 16);
+        clearRect(0, 0, 112, 32, game.helpers.scope('tilePreview'));
+        drawTile('default.png', (game.helpers.tileAt(pos.x-1, pos.y-1)[0] % 16) * 16, Math.floor(game.helpers.tileAt(pos.x-1, pos.y-1)[0] / 16) * 16, 16, 16, 0, 0, 32, 16,  game.helpers.scope('tilePreview'));
+        drawTile('default.png', (game.helpers.tileAt(pos.x-1, pos.y-1)[1] % 16) * 16, Math.floor(game.helpers.tileAt(pos.x-1, pos.y-1)[1] / 16) * 16, 16, 16, 40, 0, 32, 16, game.helpers.scope('tilePreview'));
+        drawTile('default.png', (game.helpers.tileAt(pos.x-1, pos.y-1)[0] % 16) * 16, Math.floor(game.helpers.tileAt(pos.x-1, pos.y-1)[0] / 16) * 16, 16, 16, 80, 0, 32, 16, game.helpers.scope('tilePreview'));
+        drawTile('default.png', (game.helpers.tileAt(pos.x-1, pos.y-1)[1] % 16) * 16, Math.floor(game.helpers.tileAt(pos.x-1, pos.y-1)[1] / 16) * 16, 16, 16, 80, 0, 32, 16, game.helpers.scope('tilePreview'));
 
-        L_UI.ctx.drawImage(game.vars._info.tilePreview, 190, 125, 112, 32);
+        drawImage(game.helpers.scope('tilePreview').element, 190, 125, 112, 32, L_UI);
       }
 
       fillStyle(oldFill, L_UI);
