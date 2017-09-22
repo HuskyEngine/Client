@@ -14,13 +14,17 @@ game.scripts.init = (cb) => {
     totalFiles: 0,
     start: Date.now(),
     initGameLayer: false,
-    prev: fillStyle(L_UI)
+    prev: fillStyle(L_UI),
+    nosleep: 0,
+    fps: store.get('fps'),
+    fpsNotSet: undefined
   };
 
   game.local.elapsed = () => Date.now() - game.local.start;
   game.helpers.scope('console');
   game.helpers.scope('controls');
-  game.helpers.scope('reflection', 192, 192);
+
+  game.local.fpsNotSet = game.local.fps === undefined;
   cb();
 };
 
@@ -67,8 +71,31 @@ game.scripts.layout = {
 
 // Game logic loop
 game.scripts.logic = (frame) => {
+  if (game.local.fpsNotSet) {
+    game.local.nosleep++;
+    if (frame === 240) {
+      let fps = game.vars._info.fps;
+      if (fps <= 70) {
+        game.vars._info.rate = 60;
+      } else if (fps <= 95) {
+        game.vars._info.rate = 85;
+      } else if (fps <= 110) {
+        game.vars._info.rate = 100;
+      } else if (fps <= 130) {
+        game.vars._info.rate = 120;
+      } else if (fps <= 154) {
+        game.vars._info.rate = 144;
+      } else {
+        game.vars._info.rate = game.vars._info.fps;
+      }
+      store.set('fps', game.vars._info.rate);
+    }
+  } else {
+    game.vars._info.rate = store.get('fps');
+  }
+
   // Load assets and update progress
-  if (frame === 1) {
+  if (frame === (game.local.fpsNotSet ? 240 : 1)) {
     game.helpers.loadAssets(() => {
       game.helpers.renderControls();
       game.vars.filler = new Array(50).fill().map((v, i) => {
@@ -85,9 +112,9 @@ game.scripts.logic = (frame) => {
     });
   }
 
-  if (frame > 1) {
+  if (frame > (game.local.fpsNotSet ? 240 : 1)) {
     // Everything loaded, so fade away and load main
-    if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > 2000) {
+    if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > (game.local.fpsNotSet ? 5000 : 2000)) {
       game.local.fadeAway -= .01;
       if (game.local.fadeAway < 0) {
         game.local.fadeAway = 0;
@@ -96,20 +123,6 @@ game.scripts.logic = (frame) => {
       alpha(game.local.fadeAway, L_UI);
     }
     if (game.local.loadMain) {
-      let fps = game.vars._info.fps;
-      if (fps <= 70) {
-        game.vars._info.rate = 60;
-      } else if (fps <= 95) {
-        game.vars._info.rate = 85;
-      } else if (fps <= 110) {
-        game.vars._info.rate = 100;
-      } else if (fps <= 130) {
-        game.vars._info.rate = 120;
-      } else if (fps <= 154) {
-        game.vars._info.rate = 144;
-      } else {
-        game.vars._info.rate = game.vars._info.fps;
-      }
       game.helpers.load('main');
     }
     if (Date.now() - game.local.loadedTime < 1500) {
@@ -128,10 +141,19 @@ game.scripts.logic = (frame) => {
 
 // Game render loop
 game.scripts.render = (frame) => {
+  fillStyle("#FFF", L_GAME);
+  fillRect(0, 0, 100, 100, L_GAME);
+
+  if (game.vars._info.rate === 0) {
+    let oldStyle = fillStyle(L_UI);
+    fillStyle("black", L_UI);
+    clearRect(0, 48, 100, 52, L_UI);
+    text("Running initial setup...", "30pt Arial", "center", "center", L_UI);
+    fillStyle(oldStyle, L_UI);
+  }
+
   if (!game.local.huskyLoaded) return;
   if (!game.local.initGameLayer) {
-    fillStyle("#FFF", L_GAME);
-    fillRect(0, 0, 100, 100, L_GAME);
     game.local.initGameLayer = true;
   }
 

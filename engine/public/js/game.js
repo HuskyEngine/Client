@@ -152,12 +152,16 @@ let game = {
       userSet: MAX_FPS,
       lastTime: Date.now(),
       update(limit, override=false) {
+        if (limit > store.get('fps')) limit = store.get('fps');
         if (!override) {
           game.vars._fps.userSet = limit;
         }
         game.vars._fps.limit    = limit;
         game.vars._fps.interval = 1000/limit;
-      }
+      },
+      history: queue(5),
+      renHistory: queue(5),
+      lastChange: Date.now()
     },
 
     _console: {
@@ -174,7 +178,8 @@ let game = {
     _hash: null,
     _hashTime: Date.now(),
     _sleeping: false,
-    _controlsHash: null
+    _controlsHash: null,
+    _wakeup: Date.now()
 
   },
 
@@ -288,6 +293,50 @@ $(() => {
   game.helpers.load();
 
   logic();
+
+  // Auto fps
+  if (true) {
+    setTimeout(() => {
+
+      let max = store.get('fps');
+
+      setInterval(() => {
+        // If sleeping or wake up less than 3 seconds, don't do anything
+        if (game.vars._sleeping || Date.now() - game.vars._wakeup <= 3000) {
+          console.log(game.vars._sleeping, Date.now() - game.vars._wakeup, Date.now() - game.vars._wakeup <= 3000);
+          return;
+        }
+
+        game.vars._fps.history.push(game.vars._info.fps);
+        game.vars._fps.renHistory.push(game.vars._info.render);
+
+        if (game.vars._fps.history.length !== 5 || Date.now() - game.vars._fps.lastChange <= 3000) return;
+
+        // Ignore if fps is within 5% of max
+        if (game.vars._fps.history.avg() >= (max - max * .05)) {
+          game.vars._fps.update(max);
+          return;
+        }
+
+        // If avg is less than limit-3
+        if ((game.vars._fps.renHistory.range() > 4 && game.vars._fps >= 40) || game.vars._fps.history.avg() < game.vars._fps.limit-3) {
+          console.log("1Changing fps to " + Number(game.vars._fps.history.avg()-3));
+          game.vars._fps.update(game.vars._fps.history.avg()-3);
+          game.vars._fps.lastChange = Date.now();
+        } else if (game.vars._fps.history.avg() >= game.vars._fps.limit-1 && game.vars._fps.renHistory.range() <= 4) {
+          if (game.vars._fps.renHistory.range() <= 2) {
+            console.log(game.vars._fps.history.avg(), game.vars._fps.limit-1, "3Changing fps to " + Math.ceil(Number(game.vars._fps.history.avg()+3)));
+            game.vars._fps.update(Math.ceil(Number(game.vars._fps.history.avg()+3)));
+            game.vars._fps.lastChange = Date.now();
+          } else {
+            console.log(game.vars._fps.history.avg(), game.vars._fps.limit-1, "2Changing fps to " + Math.ceil(Number(game.vars._fps.history.avg()+1)));
+            game.vars._fps.update(Math.ceil(Number(game.vars._fps.history.avg()+1)));
+            game.vars._fps.lastChange = Date.now();
+          }
+        }
+      }, 1500)
+    }, 2500);
+  }
 });
 
 /* Order of execution
@@ -304,9 +353,10 @@ function render() {
   if (Date.now() - game.vars._hashTime > 500 && game.vars._hash === game.helpers.hash()) {
     game.vars._fps.update(1, true);
     game.vars._sleeping = true;
-  } else {
+  } else if (game.vars._sleeping) {
     game.vars._fps.update(game.vars._fps.userSet, true);
     game.vars._sleeping = false;
+    game.vars._wakeup   = Date.now();
   }
 
   game.vars._info.renderLastCalled = Date.now();
@@ -346,14 +396,14 @@ function render() {
 
       // vars
       let line = 2.63;
-      let fps  = game.vars._info.fps.toFixed(1);
+      let fps  = game.vars._info.fps.toFixed(0);
       let sim  = game.vars._info.sim;
       let ren  = game.vars._info.render;
 
       if (!game.vars._sleeping && fps < (game.vars._info.rate - game.vars._info.rate * .05)) fillStyle('orange', L_UI);
       if (!game.vars._sleeping && fps < (game.vars._info.rate - game.vars._info.rate * .15)) fillStyle('red', L_UI);
 
-      text("fps:  " + fps + (game.vars._sleeping ? " (sleeping)" : ""), "24pt Arial", 0, line*1, L_UI);
+      text("fps:  " + fps + " [" + game.vars._fps.limit.toFixed(0) + "]" + (game.vars._sleeping ? " (sleeping)" : ""), "24pt Arial", 0, line*1, L_UI);
       fillStyle('white', L_UI);
 
       if (sim > 1000/game.vars._info.rate) fillStyle('red', L_UI);
@@ -513,4 +563,25 @@ function resume() {
   console.log('resuming');
   logic();
   render();
+}
+
+function queue(len) {
+  let ret = [];
+
+  ret.push = (a) => {
+    if (ret.length == len) ret.shift();
+    return Array.prototype.push.apply(ret, [a]);
+  };
+
+  ret.avg = () => {
+    if (ret.length === 0) return NaN;
+    else if (ret.length === 1) return Number(ret[0]);
+    else return Number(ret.reduce((a,b)=>a+b)/ret.length);
+  };
+
+  ret.max = () => Math.max(...ret);
+  ret.min = () => Math.min(...ret);
+  ret.range = () => ret.max() - ret.min();
+
+  return ret;
 }
