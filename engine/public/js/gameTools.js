@@ -724,9 +724,13 @@ game.helpers.coordToQuad = (coord) => {
 };
 
 game.helpers.hash = () => {
-  //return md5(JSON.stringify(_.assign(game.local, game.vars._console, {_rand: [game.vars.rand0, game.vars.rand1, game.vars.rand2, game.vars.rand3, game.vars.rand4]})));
-  //return md5(JSON.stringify(game.local));
-  return md5(JSON.stringify(_.assign(game.local, game.vars._console)));
+  if (game.vars._sleep) {
+    //return md5(JSON.stringify(_.assign(game.local, game.vars._console, {_rand: [game.vars.rand0, game.vars.rand1, game.vars.rand2, game.vars.rand3, game.vars.rand4]})));
+    //return md5(JSON.stringify(game.local));
+    return md5(JSON.stringify(_.assign(game.local, game.vars._console)));
+  } else {
+    return Math.random() * 10000;
+  }
 };
 
 game.helpers.scope = (name, width=2048, height=1152) => {
@@ -800,4 +804,51 @@ game.helpers.getQuad = (x, y, valid=false) => {
   } else {
     return valid ? false : game.vars.fillerQuad;
   }
+};
+
+game.helpers.autofps = () => {
+  if (game.vars._fps.dynamicInterval !== undefined) return;
+
+  setTimeout(() => {
+    let max = store.get('fps');
+    let xtra = 0;
+    game.vars._fps.dynamicInterval = setInterval(() => {
+      // If sleeping or wake up less than 3 seconds, don't do anything
+      if (game.vars._sleeping || Date.now() - game.vars._wakeup <= 3000) {
+        console.log(game.vars._sleeping, Date.now() - game.vars._wakeup, Date.now() - game.vars._wakeup <= 3000);
+        return;
+      }
+
+      game.vars._fps.history.push(game.vars._info.fps);
+      game.vars._fps.renHistory.push(game.vars._info.render);
+
+      if (game.vars._fps.history.length !== 5 || Date.now() - game.vars._fps.lastChange <= 3000) return;
+
+      // Ignore if fps is within 5% of max
+      if (game.vars._fps.history.avg() >= (max - max * .05)) {
+        game.vars._fps.update(max);
+        return;
+      }
+
+      // If avg is less than limit-3
+      if ((game.vars._fps.renHistory.range() > 4 && game.vars._fps >= 40) || (!game.vars._fps.increased && game.vars._fps.history.avg() < game.vars._fps.limit-3) || (game.vars._fps.increased && game.vars._fps.history.slice(-3).reduce((a,b)=>a+b)/3 < game.vars._fps.limit-3)) {
+        console.log("1Changing fps to " + Number(game.vars._fps.history.avg()-3));
+        game.vars._fps.update(game.vars._fps.history.avg()-3);
+        game.vars._fps.lastChange = Date.now();
+        xtra = 0;
+      } else if (game.vars._fps.history.avg() >= game.vars._fps.limit-1 && game.vars._fps.renHistory.range() <= 4) {
+        if (game.vars._fps.renHistory.range() <= 2) {
+          console.log(game.vars._fps.history.avg(), game.vars._fps.limit-1, "3Changing fps to " + Math.ceil(Number(game.vars._fps.history.avg()+5+xtra)));
+          game.vars._fps.update(Math.ceil(Number(game.vars._fps.history.avg()+5+xtra)));
+          game.vars._fps.lastChange = Date.now();
+          game.vars._fps.increased = true;
+          xtra += Math.ceil((.25*xtra)+1);
+        } else {
+          console.log(game.vars._fps.history.avg(), game.vars._fps.limit-1, "2Changing fps to " + Math.ceil(Number(game.vars._fps.history.avg()+1)));
+          game.vars._fps.update(Math.ceil(Number(game.vars._fps.history.avg()+1)));
+          game.vars._fps.lastChange = Date.now();
+        }
+      }
+    }, 1500)
+  }, 2500);
 };

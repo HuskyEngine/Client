@@ -161,7 +161,10 @@ let game = {
       },
       history: queue(5),
       renHistory: queue(5),
-      lastChange: Date.now()
+      lastChange: Date.now(),
+      increased: false,
+      dynamicInterval: undefined,
+      auto: false
     },
 
     _console: {
@@ -179,7 +182,8 @@ let game = {
     _hashTime: Date.now(),
     _sleeping: false,
     _controlsHash: null,
-    _wakeup: Date.now()
+    _wakeup: Date.now(),
+    _sleep: false
 
   },
 
@@ -295,48 +299,7 @@ $(() => {
   logic();
 
   // Auto fps
-  if (true) {
-    setTimeout(() => {
-
-      let max = store.get('fps');
-
-      setInterval(() => {
-        // If sleeping or wake up less than 3 seconds, don't do anything
-        if (game.vars._sleeping || Date.now() - game.vars._wakeup <= 3000) {
-          console.log(game.vars._sleeping, Date.now() - game.vars._wakeup, Date.now() - game.vars._wakeup <= 3000);
-          return;
-        }
-
-        game.vars._fps.history.push(game.vars._info.fps);
-        game.vars._fps.renHistory.push(game.vars._info.render);
-
-        if (game.vars._fps.history.length !== 5 || Date.now() - game.vars._fps.lastChange <= 3000) return;
-
-        // Ignore if fps is within 5% of max
-        if (game.vars._fps.history.avg() >= (max - max * .05)) {
-          game.vars._fps.update(max);
-          return;
-        }
-
-        // If avg is less than limit-3
-        if ((game.vars._fps.renHistory.range() > 4 && game.vars._fps >= 40) || game.vars._fps.history.avg() < game.vars._fps.limit-3) {
-          console.log("1Changing fps to " + Number(game.vars._fps.history.avg()-3));
-          game.vars._fps.update(game.vars._fps.history.avg()-3);
-          game.vars._fps.lastChange = Date.now();
-        } else if (game.vars._fps.history.avg() >= game.vars._fps.limit-1 && game.vars._fps.renHistory.range() <= 4) {
-          if (game.vars._fps.renHistory.range() <= 2) {
-            console.log(game.vars._fps.history.avg(), game.vars._fps.limit-1, "3Changing fps to " + Math.ceil(Number(game.vars._fps.history.avg()+3)));
-            game.vars._fps.update(Math.ceil(Number(game.vars._fps.history.avg()+3)));
-            game.vars._fps.lastChange = Date.now();
-          } else {
-            console.log(game.vars._fps.history.avg(), game.vars._fps.limit-1, "2Changing fps to " + Math.ceil(Number(game.vars._fps.history.avg()+1)));
-            game.vars._fps.update(Math.ceil(Number(game.vars._fps.history.avg()+1)));
-            game.vars._fps.lastChange = Date.now();
-          }
-        }
-      }, 1500)
-    }, 2500);
-  }
+  if (game.vars._fps.auto) game.helpers.autofps();
 });
 
 /* Order of execution
