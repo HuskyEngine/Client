@@ -35,12 +35,21 @@ function consoleHandler(key) {
       },
       fps: {
         action() {
-          let limit = Number((command[1] || -1));
-          if (Number.isNaN(limit)) limit = 0;
-          if (limit === -1) result = game.vars._fps.limit;
-          else {
-            game.vars._fps.update(limit);
-            result = limit;
+          if (command[1] === "auto") {
+            game.vars._fps.auto = true;
+            game.helpers.autofps();
+            result = "Fps is now auto";
+          } else {
+            let limit = Number((command[1] || -1));
+            if (Number.isNaN(limit)) limit = 0;
+            if (limit === -1) result = game.vars._fps.limit;
+            else {
+              game.vars._fps.auto = false;
+              clearInterval(game.vars._fps.dynamicInterval);
+              game.vars._fps.dynamicInterval = undefined;
+              game.vars._fps.update(limit);
+              result = limit;
+            }
           }
         },
         man: `Sets/Fetches max fps.`
@@ -126,47 +135,6 @@ function consoleHandler(key) {
         },
         man: `Set map render opacity`
       },
-      scale: {
-        action() {
-          if (command[1].slice(-2) === "px") {
-            L_MAIN.element.width  = command[1].slice(0, -2);
-            L_MAIN.element.height = L_MAIN.element.width * 9/16;
-            L_MAIN.ctx.imageSmoothingEnabled = false;
-            result = "Scale changed to " + command[1];
-          } else {
-            let num = Number(command[1]);
-            if (command[1] === undefined) {
-              result = "Main scale is currently " + L_MAIN.scale();
-            } else if (!Number.isNaN(num)) {
-              let old = L_MAIN.scale();
-              L_MAIN.scale(num);
-              result = "Main scale changed from " + old + " to " + L_MAIN.scale();
-            }
-          }
-        },
-        man: `Change the scale of main layer`
-      },
-      showinfo: {
-        action() {
-          game.vars._info.showInfo = true;
-          result = "true";
-        },
-        man: `Shows info.`
-      },
-      showcovers: {
-        action() {
-          game.local.showCovers = true;
-          result = "true";
-        },
-        man: `Shows covers`
-      },
-      showsolids: {
-        action() {
-          game.local.showSolids = true;
-          result = "true";
-        },
-        man: `Shows solids`
-      },
       refresh: {
         action() {
           game.helpers.setTimeout(() => {
@@ -210,6 +178,54 @@ function consoleHandler(key) {
           result = "Reloading assets";
         },
         man: `Reload game assets and then reload scene.`
+      },
+      scale: {
+        action() {
+          if (command[1].slice(-2) === "px") {
+            L_MAIN.element.width  = command[1].slice(0, -2);
+            L_MAIN.element.height = L_MAIN.element.width * 9/16;
+            L_MAIN.ctx.imageSmoothingEnabled = false;
+            result = "Scale changed to " + command[1];
+          } else {
+            let num = Number(command[1]);
+            if (command[1] === undefined) {
+              result = "Main scale is currently " + L_MAIN.scale();
+            } else if (!Number.isNaN(num)) {
+              let old = L_MAIN.scale();
+              L_MAIN.scale(num);
+              result = "Main scale changed from " + old + " to " + L_MAIN.scale();
+            }
+          }
+        },
+        man: `Change the scale of main layer`
+      },
+      showinfo: {
+        action() {
+          game.vars._info.showInfo = true;
+          result = "true";
+        },
+        man: `Shows info.`
+      },
+      showcovers: {
+        action() {
+          game.local.showCovers = true;
+          result = "true";
+        },
+        man: `Shows covers`
+      },
+      showsolids: {
+        action() {
+          game.local.showSolids = true;
+          result = "true";
+        },
+        man: `Shows solids`
+      },
+      sleep: {
+        action() {
+          game.vars._sleep = !game.vars._sleep;
+          result = "Sleep is now " + (!game.vars._sleep ? "disabled" : "enabled");
+        },
+        man: `Disable/Enable sleep on idle`
       },
       loadmap: {
         action() {
