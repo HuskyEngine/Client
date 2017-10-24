@@ -1,4 +1,0 @@
-#!/bin/bash
-if [ ! -f "scenes/$1.js" ]; then
-  echo -e "// Init script\ngame.scripts.init = (cb) => {\n  cb();\n};\n\n\n// Button Listeners\ngame.scripts.onTouch = (button) => {\n\n};\n\ngame.scripts.onTap = (button) => {\n\n};\n\ngame.scripts.onHold = (button) => {\n\n};\n\ngame.scripts.onUntouch = (button) => {\n\n};\n\n\n// Keyboard listeners\ngame.scripts.onKeyTouch = (key) => {\n\n};\n\ngame.scripts.onKeyTap = (key) => {\n\n};\n\ngame.scripts.onKeyHold = (key) => {\n\n};\n\ngame.scripts.onKeyUntouch = (key) => {\n\n};\n\n\n// Button layout\ngame.scripts.layout = {\n\n};\n\n\n// Game logic loop\ngame.scripts.logic = (frame) => {\n\n};\n\n\n// Game render loop\ngame.scripts.render = (frame) => {\n\n};" > scenes/$1.js
-fi
