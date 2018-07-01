@@ -4,16 +4,23 @@ let debug = false;
 function text(text, info, x, y, canvas=L_MAIN) {
   let size;
   if (typeof info === "object") {
-    canvas.ctx.font = `${info.size}pt ${info.font}`;
+    let ratio = info.size / game.settings.baseFont;
+    let size = L_MAIN.element.width * ratio;
+
+    canvas.ctx.font = `${size}px ${info.font}`;
     size = info.size;
   } else if (typeof info === "number") {
-    canvas.ctx.font = info + "pt " + game.vars.defaultFont;
-    size = info;
+    let ratio = info / game.settings.baseFont;
+    let size = L_MAIN.element.width * ratio;
+
+    canvas.ctx.font = size + "px " + game.vars.defaultFont;
   } else {
     let ind = info.indexOf('pt');
     info = info.slice(0, ind) + info.slice(ind);
-    canvas.ctx.font = info;
-    size = info;
+    let ratio = info / game.settings.baseFont;
+    let size = L_MAIN.element.width * ratio;
+
+    canvas.ctx.font = size + "px " + game.vars.defaultFont;
   }
 
   let xCenter = ((canvas.element.width/2)-(canvas.ctx.measureText(text).width/2));
@@ -260,8 +267,20 @@ function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, d
     game.helpers.load('error', {type: "IMAGE_NOT_FOUND", msg: `Attempt to draw image "${image}" failed.`});
   }
 
+  let xCenter = canvas.element.width/2;
+  let yCenter = canvas.element.height/2;
+
+  if (sx === "center") sx = xCenter;
+  else if (typeof sx === "string" && sx.slice(-2) === "px") sx = Number(sx.slice(0, -2).trim());
+  else sx = Number(sx) * .01 * canvas.element.width;
+  if (Number.isNaN(sx)) sx = xCenter;
+
+  if (sy === "center") sy = yCenter;
+  else if (typeof sy === "string" && sy.slice(-2) === "px") sy = Number(sy.slice(0, -2).trim());
+  else sy = Number(sy) * .01 * canvas.element.height;
+  if (Number.isNaN(sy)) sy = yCenter;
+
   if (sHeight === null) {
-    // Default canvas
     if (sWidth === null) {
       canvas.ctx.drawImage(image, sx, sy);
     } else {
@@ -269,13 +288,46 @@ function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, d
     }
 
   } else if (dy === null) {
-    // Default canvas
+    if (sWidth === "center") sWidth = xCenter;
+    else if (typeof sWidth === "string" && sWidth.slice(-2) === "px") sWidth = Number(sWidth.slice(0, -2).trim());
+    else sWidth = Number(sWidth) * .01 * canvas.element.width;
+    if (Number.isNaN(sWidth)) sWidth = xCenter;
+
+    if (sHeight === "center") sHeight = yCenter;
+    else if (typeof sHeight === "string" && sHeight.slice(-2) === "px") sHeight = Number(sHeight.slice(0, -2).trim());
+    else sHeight = Number(sHeight) * .01 * canvas.element.height;
+    if (Number.isNaN(sHeight)) sHeight = yCenter;
+
+    //sx = ((canvas.element.width/2)-(sWidth/2));
+    //sy = ((canvas.element.height/2)-(sHeight/2));
+
     if (dx === null) {
       canvas.ctx.drawImage(image, sx, sy, sWidth, sHeight);
     } else {
       dx.ctx.drawImage(image, sx, sy, sWidth, sHeight);
     }
   } else {
+    if (dx === "center") dx = xCenter;
+    else if (typeof dx === "string" && dx.slice(-2) === "px") dx = Number(dx.slice(0, -2).trim());
+    else dx = Number(dx) * .01 * canvas.element.width;
+    if (Number.isNaN(dx)) dx = xCenter;
+
+    if (dy === "center") dy = yCenter;
+    else if (typeof dy === "string" && dy.slice(-2) === "px") dy = Number(dy.slice(0, -2).trim());
+    else dy = Number(dy) * .01 * canvas.element.height;
+    if (Number.isNaN(dy)) dy = yCenter;
+
+    if (dWidth === "center") dWidth = xCenter;
+    else if (typeof dWidth === "string" && dWidth.slice(-2) === "px") dWidth = Number(dWidth.slice(0, -2).trim());
+    else dWidth = Number(dWidth) * .01 * canvas.element.width;
+    if (Number.isNaN(dWidth)) dWidth = xCenter;
+
+    if (dHeight === "center") dHeight = yCenter;
+    else if (typeof dHeight === "string" && dHeight.slice(-2) === "px") dHeight = Number(dHeight.slice(0, -2).trim());
+    else dHeight = Number(dHeight) * .01 * canvas.element.height;
+    if (Number.isNaN(dHeight)) dHeight = yCenter;
+
+    console.log("draw");
     canvas.ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
   }
 }

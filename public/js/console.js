@@ -311,27 +311,27 @@ function consoleDisplay() {
 
     alpha(0.5, L_CONSOLE);
     fillStyle('black', L_CONSOLE);
-    fillRect(0, 0, L_CONSOLE.element.width, L_CONSOLE.element.height, L_CONSOLE);
+    fillRect(0, 0, 100, 100, L_CONSOLE);
     fillStyle('white', L_CONSOLE);
     alpha(1, L_CONSOLE);
 
     let linenum = 0;
     let content = "Husky Engine v0.0.1 > " + game.vars._console.content;
-    text(content, "24pt Arial", 0, 2.5*(linenum+1), L_CONSOLE);
+    text(content, {size: 14, font: "Arial"}, 0, 2.5*(linenum+1), L_CONSOLE);
 
     // Show partial match
     if (game.vars._console.match !== "") {
       fillStyle('#AAA', L_CONSOLE);
-      text(game.vars._console.match, "24pt Arial", L_CONSOLE.ctx.measureText(content).width + "px", 2.5*(linenum+1), L_CONSOLE);
+      text(game.vars._console.match, {size: 14, font: "Arial"}, L_CONSOLE.ctx.measureText(content).width + "px", 2.5*(linenum+1), L_CONSOLE);
       fillStyle('white', L_CONSOLE);
     }
 
     game.vars._console.log.forEach((line) => {
-      text(line, "24pt Arial", 0, 2.5*(++linenum+2), L_CONSOLE);
+      text(line, {size: 14, font: "Arial"}, 0, 2.5*(++linenum+2), L_CONSOLE);
     });
 
     fillStyle(oldFill, L_CONSOLE);
     alpha(oldAlpha, L_CONSOLE);
-    drawImage(L_CONSOLE.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height, L_MAIN);
+    drawImage(L_CONSOLE.element, 0, 0, 100, 100, L_MAIN);
   }
 }

@@ -25,6 +25,8 @@ game.scripts.init = (cb) => {
   game.helpers.scope('controls');
 
   game.local.fpsNotSet = game.local.fps === undefined;
+
+  game.helpers.resize();
   cb();
 };
 
@@ -86,7 +88,7 @@ game.scripts.logic = (frame) => {
       } else if (fps <= 154) {
         game.vars._info.rate = 144;
       } else {
-        game.vars._info.rate = game.vars._info.fps;
+        game.vars._info.rate = 60;
       }
       store.set('fps', game.vars._info.rate);
     }
@@ -97,7 +99,7 @@ game.scripts.logic = (frame) => {
   // Load assets and update progress
   if (frame === (game.local.fpsNotSet ? 240 : 1)) {
     game.helpers.loadAssets(() => {
-      game.helpers.renderControls();
+      //game.helpers.renderControls();
       game.vars.filler = new Array(50).fill().map((v, i) => {
         if (i % 2) {
           return new Array(50).fill().map((v, i) => i % 2 ? [0,606] : [0,605]);
@@ -126,15 +128,15 @@ game.scripts.logic = (frame) => {
       game.helpers.load('main');
     }
     if (Date.now() - game.local.loadedTime < 1500) {
-      game.local.alpha += .01;
-      game.local.huskySize += 3;
+      if (game.local.alpha <= 1) game.local.alpha += .01;
+      if (game.local.huskySize <= 150) game.local.huskySize += 2.25;
       alpha(1, L_UI);
 
       if (game.local.fontSize < 10) game.local.fontSize += .5;
-      else if (game.local.fontSize < 20) game.local.fontSize += .4;
-      else if (game.local.fontSize < 30) game.local.fontSize += .3;
-      else if (game.local.fontSize < 40) game.local.fontSize += .2;
-      else if (game.local.fontSize < 50) game.local.fontSize += .1;
+      else if (game.local.fontSize < 15) game.local.fontSize += .4;
+      else if (game.local.fontSize < 20) game.local.fontSize += .3;
+      else if (game.local.fontSize < 25) game.local.fontSize += .2;
+      else if (game.local.fontSize < 30) game.local.fontSize += .1;
     }
   }
 };
@@ -146,9 +148,11 @@ game.scripts.render = (frame) => {
 
   if (game.vars._info.rate === 0) {
     let oldStyle = fillStyle(L_UI);
+    clearRect(28, 38, 42, 20, L_UI);
     fillStyle("black", L_UI);
-    clearRect(0, 48, 100, 52, L_UI);
-    text("Running initial setup...", "30pt Arial", "center", "center", L_UI);
+    alpha(.10, L_UI);
+    fillRect(33, 43, 32, 10, L_UI);
+    text("Running initial setup...", {size: 30, font: "Arial"}, "center", "center", L_UI);
     fillStyle(oldStyle, L_UI);
   }
 
@@ -158,9 +162,9 @@ game.scripts.render = (frame) => {
   }
 
   // File name
-  clearRect(0, 80, 100, 82, L_UI);
+  clearRect(18, 75, 64, 20, L_UI);
   alpha(game.local.fadeAway, L_UI);
-  text(game.local.fileName, "16pt Arial", "center", 82, L_UI);
+  text(game.local.fileName, {size: 16, font: "Arial"}, "center", 82, L_UI);
 
   // Progress bar
   fillStyle("#00F", L_UI);
@@ -173,13 +177,13 @@ game.scripts.render = (frame) => {
   }
 
   // Percentage text
-  text(((game.local.filesLoaded/game.local.totalFiles)*100).toFixed(2) + "%", "20pt Arial", "center", 86.5, L_UI);
+  text(((game.local.filesLoaded/game.local.totalFiles)*100) + "%", {size: 16, font: "Arial"}, "center", 86.5, L_UI);
   fillStyle(game.local.prev, L_UI);
 
   // Files loaded fraction
-  text(game.local.filesLoaded + " / " + game.local.totalFiles, "16pt Arial", "center", 91, L_UI);
+  text(game.local.filesLoaded + " / " + game.local.totalFiles, {size: 16, font: "Arial"}, "center", 91, L_UI);
 
-  clearRect(40, 20, 20, 40, L_UI);
+  clearRect(40, 10, 20, 60, L_UI);
   // fillStyle('CCC', L_UI);
   // alpha(0.5, L_UI)
   // fillRect(40, 20, 20, 40, L_UI);
@@ -194,8 +198,8 @@ game.scripts.render = (frame) => {
   }
 
 
-  text("Powered By", game.local.fontSize + "pt Arial", "center", (((365-(((game.local.huskySize)/4)*1.25))/1152)*100), L_UI);
-  drawImage('huskyengine', (L_UI.element.width/2-((game.local.huskySize)/2)), (L_UI.element.height/2-((game.local.huskySize)/2)-200+((game.local.huskySize)/4)), (game.local.huskySize), (game.local.huskySize), L_UI);
-  text("Husky Engine", game.local.fontSize + "pt Arial", "center", ((410+(((game.local.huskySize)/2)*1.6))/1152)*100, L_UI);
-
+  text("Powered By", {size: game.local.fontSize, font: "Arial"}, "center", (((365-(((game.local.huskySize)/2)*1.25))/1152)*100), L_UI);
+  //drawImage('huskyengine', (L_UI.element.width/2-((game.local.huskySize)/2)), (L_UI.element.height/2-((game.local.huskySize)/2)-125+((game.local.huskySize)/6)), (game.local.huskySize), (game.local.huskySize), L_UI);
+  drawImage('huskyengine', 50-(game.local.huskySize/20), 50-(game.local.huskySize/50)-27, game.local.huskySize/10, game.local.huskySize/4.5, L_UI);
+  text("Husky Engine", {size: game.local.fontSize, font: "Arial"}, "center", ((510+(((game.local.huskySize)/2)*1.6))/1152)*100, L_UI);
 };

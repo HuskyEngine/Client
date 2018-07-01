@@ -59,11 +59,22 @@ game.helpers.resize = function() {
   }
 
   if (L_MAIN !== undefined) {
-    L_MAIN.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
-    L_MAIN.element.height  = ~~L_MAIN.element.style.height.slice(0, -2);
+    L_MAIN.element.width = ~~L_MAIN.element.style.width.slice(0, -2);
+    L_MAIN.element.height = ~~L_MAIN.element.style.height.slice(0, -2);
+
+    L_UI.element.width = L_MAIN.element.width;
+    L_UI.element.height = L_MAIN.element.height;
+
+    L_GAME.element.width = L_MAIN.element.width;
+    L_GAME.element.height = L_MAIN.element.height;
+
+    // Set scopes to native resolution if set
+    _.forEach(game.scopes, scope => {
+      scope.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
+      scope.element.height = ~~L_MAIN.element.style.height.slice(0, -2);
+    });
   }
 
-  //L_MAIN.scale(window.innerWidth/2048)
 };
 
 game.helpers.mobileCheck = function() {
@@ -733,7 +744,7 @@ game.helpers.hash = () => {
   }
 };
 
-game.helpers.scope = (name, width=2048, height=1152) => {
+game.helpers.scope = (name, width=-1, height=-1) => {
   if (game.scopes[name] !== undefined) return game.scopes[name];
 
   let scope = {
@@ -742,14 +753,26 @@ game.helpers.scope = (name, width=2048, height=1152) => {
     rect:    null
   };
 
-  scope.element.width  = width;
-  scope.element.height = height;
+  scope.nativeResolution = width === -1 && height === -1;
+
+  if (!scope.nativeResolution) {
+    scope.element.width  = width;
+    scope.element.height = height;
+  } else {
+    scope.element.width  = window.innerWidth;
+    scope.element.height = window.innerHeight;
+  }
+
   scope.ctx   = scope.element.getContext('2d');
   scope.ctx.imageSmoothingEnabled = false;
   scope.rect  = scope.element.getBoundingClientRect();
   scope.name  = name;
 
   game.scopes[name] = scope;
+
+  scope.xCenter = scope.element.width/2;
+  scope.yCenter = scope.element.height/2;
+
   return scope;
 };
 
