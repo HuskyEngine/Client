@@ -97,26 +97,16 @@ game.scripts.logic = (frame) => {
   }
 
   // Load assets and update progress
-  if (frame === (game.local.fpsNotSet ? 240 : 1)) {
+  if (frame === (game.local.fpsNotSet ? 240 : 10)) {
     game.helpers.loadAssets(() => {
       //game.helpers.renderControls();
-      game.vars.filler = new Array(50).fill().map((v, i) => {
-        if (i % 2) {
-          return new Array(50).fill().map((v, i) => i % 2 ? [0,606] : [0,605]);
-        } else {
-          return new Array(50).fill().map((v, i) => i % 2 ? [0,590] : [0,589]);
-        }
-      });
-
-      game.helpers.loadMap('default', () => {
-        game.local.loaded = true;
-      });
+      game.local.loaded = true;
     });
   }
 
   if (frame > (game.local.fpsNotSet ? 240 : 1)) {
     // Everything loaded, so fade away and load main
-    if (!game.local.loadMain && game.local.loaded && game.local.elapsed() > (game.local.fpsNotSet ? 5000 : 2000)) {
+    if (!game.local.loadMain && game.local.elapsed() > (game.local.fpsNotSet ? 5000 : 2000)) {
       game.local.fadeAway -= .01;
       if (game.local.fadeAway < 0) {
         game.local.fadeAway = 0;
@@ -150,8 +140,6 @@ game.scripts.render = (frame) => {
     let oldStyle = fillStyle(L_UI);
     clearRect(28, 38, 42, 20, L_UI);
     fillStyle("black", L_UI);
-    alpha(.10, L_UI);
-    fillRect(33, 43, 32, 10, L_UI);
     text("Running initial setup...", {size: 30, font: "Arial"}, "center", "center", L_UI);
     fillStyle(oldStyle, L_UI);
   }
@@ -160,6 +148,8 @@ game.scripts.render = (frame) => {
   if (!game.local.initGameLayer) {
     game.local.initGameLayer = true;
   }
+
+  clearRect(28, 38, 42, 20, L_UI);
 
   // File name
   clearRect(18, 75, 64, 20, L_UI);
