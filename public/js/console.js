@@ -20,7 +20,7 @@ function consoleHandler(key) {
       game.vars._console.content = game.vars._console.content.slice(0, -1);
       if (game.vars._console.content.length === 0) game.vars._console.match = "";
 
-    } else if (["Escape", "Enter", "ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft", "Tab"].indexOf(key) === -1) {
+    } else if (["Escape", "Enter", "ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft", "Tab", "`"].indexOf(key) === -1) {
       game.vars._console.content += key;
 
     }
@@ -288,7 +288,7 @@ function consoleHandler(key) {
   }
 
   // Toggle console
-  if (key === "Escape") {
+  if (key === "`") {
     game.animations.clear(L_CONSOLE);
     game.vars._console.display = !game.vars._console.display;
     let val = game.settings.holdDelay;

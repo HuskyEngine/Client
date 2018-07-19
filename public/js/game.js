@@ -93,6 +93,11 @@ let game = {
   logicLoop:   undefined,
   logicReady:  false,
 
+  // Render loop
+  renderFrame: 0,
+  renderLoop:  undefined,
+  renderReady: false,
+
   // Map data
   map: {
     name: null,
@@ -100,14 +105,8 @@ let game = {
     grid: [],
     quadrants: [],
     reflections: [],
-    cover: [],
-    coverTiles: [625, 577, 593, 609, 608, 592, 533, 560, 561, 570, 571, 586, 587, 568, 569, 584, 585, 864, 865, 866, 867, 868, 644, 645, 646, 647, 725, 726, 727, 720, 721, 722, 723, 724, 656, 657, 658, 659, 1272, 1273, 1274, 1275, 1276]
+    cover: []
   },
-
-  // Render loop
-  renderFrame: 0,
-  renderLoop:  undefined,
-  renderReady: false,
 
   // Hold all canvases that are to be saved and reused
   scopes: {},
@@ -201,12 +200,6 @@ $.get('config', (data) => {
   game.vars._fps.update(MAX_FPS);
   game.vars.config = data;
   game.vars.defaultFont = data.defaultFont;
-  game.vars._info.showInfo = data.debug;
-  game.settings.multiplier = data.multiplier;
-  game.settings.tilesize = data.tilesize;
-  game.settings.quadrantsize = data.quadrantsize;
-
-  game.helpers.scope('tilePreview', 112, 16);
 });
 
 $(() => {
@@ -217,6 +210,7 @@ $(() => {
   FastClick.attach(document.body);
 
   // TODO: Prevent google chrome pull down to refresh
+  // https://developers.google.com/web/updates/2017/11/overscroll-behavior
   // Don't allow scrolling on mobile
   $(document).bind('touchmove', false);
 
@@ -227,18 +221,18 @@ $(() => {
   L_MAIN.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
   L_MAIN.element.height  = ~~L_MAIN.element.style.height.slice(0, -2);
 
-  L_MAIN.ctx     = L_MAIN.element.getContext('2d');
-  L_MAIN.rect    = L_MAIN.element.getBoundingClientRect();
-  L_MAIN.name    = "main";
+  L_MAIN.ctx  = L_MAIN.element.getContext('2d');
+  L_MAIN.rect = L_MAIN.element.getBoundingClientRect();
+  L_MAIN.name = "main";
 
   // Set up game and ui layers
   L_GAME = game.layers.game;
   L_GAME.element = document.createElement("canvas");
   L_GAME.element.width  = L_MAIN.element.width;
   L_GAME.element.height = L_MAIN.element.height;
-  L_GAME.ctx     = L_GAME.element.getContext('2d');
-  L_GAME.rect    = L_GAME.element.getBoundingClientRect();
-  L_GAME.name    = "game";
+  L_GAME.ctx  = L_GAME.element.getContext('2d');
+  L_GAME.rect = L_GAME.element.getBoundingClientRect();
+  L_GAME.name = "game";
 
   L_UI = game.layers.ui;
   L_UI.element = document.createElement("canvas");
@@ -302,9 +296,12 @@ $(() => {
   // Load will get assets ready, perform checks, show powered by husky engine, etc.
   game.helpers.load();
 
+  // Start logic loop
   logic();
 
   // Auto fps
+  // Auto fps isn't really that great yet and
+  // tends to end up in an infinite pessimistic loop
   if (game.vars._fps.auto) game.helpers.autofps();
 });
 
@@ -574,4 +571,5 @@ function queue(len) {
   return ret;
 }
 
+// Pause/Resume game if screen is visible
 vis(() => vis() ? resume() : pause());
