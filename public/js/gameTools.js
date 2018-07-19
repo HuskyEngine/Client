@@ -847,8 +847,8 @@ game.helpers.autofps = () => {
 
       if (game.vars._fps.history.length !== 5 || Date.now() - game.vars._fps.lastChange <= 3000) return;
 
-      // Ignore if fps is within 5% of max
-      if (game.vars._fps.history.avg() >= (max - max * .05)) {
+      // Ignore if fps is within 10% of max
+      if (game.vars._fps.history.avg() >= (max - max * .1)) {
         game.vars._fps.update(max);
         return;
       }
