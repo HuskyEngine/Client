@@ -279,6 +279,7 @@ $(() => {
   }, false);
 
   document.addEventListener("keyup", e => {
+    if (!e.metaKey) e.preventDefault();
     e.preventDefault();
     game.helpers.updateKeys(e, true);
   }, false);
