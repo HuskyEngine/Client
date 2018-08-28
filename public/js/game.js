@@ -146,6 +146,11 @@ let game = {
       lastCancel: Date.now()
     },
 
+    _networking: {
+      ping: queue(5),
+      connected: false
+    },
+
     _fps: {
       logicTime: Date.now(),
       renderTime: Date.now(),
@@ -293,17 +298,32 @@ $(() => {
     }, 250);
   });
 
-  // Load the load scene first
-  // Load will get assets ready, perform checks, show powered by husky engine, etc.
-  game.helpers.load();
+  // Connect to server
+  game.socket = io();
 
-  // Start logic loop
-  logic();
+  let tmp = setTimeout(() => {
+    game.helpers.load('error', {type: "SERVER_OFFLINE", msg: `Failed to connect to game server.`});
+  }, 5000);
 
-  // Auto fps
-  // Auto fps isn't really that great yet and
-  // tends to end up in an infinite pessimistic loop
-  if (game.vars._fps.auto) game.helpers.autofps();
+  // Once connected to server...
+  game.socket.once('_connected', data => {
+    clearInterval(tmp);
+
+    // Initial ping
+    game.helpers.ping();
+
+    // Load the load scene first
+    // Load will get assets ready, perform checks, show powered by husky engine, etc.
+    game.helpers.load();
+
+    // Start logic loop
+    logic();
+
+    // Auto fps
+    // Auto fps isn't really that great yet and
+    // tends to end up in an infinite pessimistic loop
+    if (game.vars._fps.auto) game.helpers.autofps();
+  });
 });
 
 /* Order of execution
@@ -384,6 +404,22 @@ function render() {
       fillStyle('white', L_UI);
 
       text(`frames: logic=${game.logicFrame} render=${game.renderFrame} diff=${Math.abs(game.logicFrame - game.renderFrame)}`, {size: 18, font: "Arial"}, 0, line*4, L_UI);
+
+      text(`connection status: `, {size: 18, font: "Arial"}, 0, line*6, L_UI);
+      if (!game.vars._networking.connected) fillStyle('red', L_UI);
+      if (game.vars._networking.connected) fillStyle('#00FF44', L_UI);
+
+
+      let width = L_UI.ctx.measureText(`connection status: `).width + "px";
+      text(game.vars._networking.connected ? "online" : "offline", {size: 18, font: "Arial"}, width, line*6, L_UI);
+      fillStyle('white', L_UI);
+
+      if (game.vars._networking.connected) {
+        let pingText = `ping: ${game.vars._networking.ping.avg().toFixed(0)} ms`;
+        text(pingText, {size: 18, font: "Arial"}, 0, line*7, L_UI);
+        width = L_UI.ctx.measureText(pingText).width + 10 + "px";
+        drawImage(game.helpers.scope('ping').element, width, line*7-2.4, 1.5, 2.5, L_UI);
+      }
 
       let pos = game.helpers.getPos();
 
@@ -513,8 +549,13 @@ function logic() {
     }
 
     game.vars._info.sim = Date.now() - game.vars._info.simLastCalled;
+
   }});
+
   game.logicLoop.run();
+
+  // Ping every 5 seconds
+  setInterval(game.helpers.ping, 5000);
 }
 
 function getRandomIntInclusive(min, max) {

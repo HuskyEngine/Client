@@ -875,3 +875,41 @@ game.helpers.autofps = () => {
     }, 1500)
   }, 2500);
 };
+
+game.helpers.ping = () => {
+  game.vars._networking.connected = game.socket.connected;
+
+  game.socket.emit('_ping', {data: Date.now()});
+  game.socket.once('_pong', data => {
+    if (data.error) console.log(data.error);
+    else game.vars._networking.ping.push(Date.now() - data.data);
+
+    let pingCtx = game.helpers.scope('ping');
+    let ping = game.vars._networking.ping.avg().toFixed(0);
+    clearRect(0, 0, 100, 100, pingCtx);
+
+    if (ping < 50) {
+      fillStyle("#00FF44", pingCtx);
+      fillRect(0, 75, 25, 25, pingCtx);
+      fillRect(25, 50, 25, 50, pingCtx);
+      fillRect(50, 25, 25, 75, pingCtx);
+      fillRect(75, 0, 25, 100, pingCtx);
+
+    } else if (ping >= 50 && ping < 100) {
+      fillStyle("#FFF700", pingCtx);
+      fillRect(0, 75, 25, 25, pingCtx);
+      fillRect(25, 50, 25, 50, pingCtx);
+      fillRect(50, 25, 25, 75, pingCtx);
+
+    } else if (ping >= 100 && ping < 150) {
+      fillStyle("#FF9A00", pingCtx);
+      fillRect(0, 75, 25, 25, pingCtx);
+      fillRect(25, 50, 25, 50, pingCtx);
+
+    } else {
+      fillStyle("#F00", pingCtx);
+      fillRect(0, 75, 25, 25, pingCtx);
+
+    }
+  });
+};

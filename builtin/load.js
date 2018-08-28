@@ -23,6 +23,7 @@ game.scripts.init = (cb) => {
   game.local.elapsed = () => Date.now() - game.local.start;
   game.helpers.scope('console');
   game.helpers.scope('controls');
+  game.helpers.scope('ping', 80, 40);
 
   game.local.fpsNotSet = game.local.fps === undefined;
 
