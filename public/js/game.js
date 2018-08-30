@@ -309,8 +309,15 @@ $(() => {
   game.socket.once('_connected', data => {
     clearInterval(tmp);
 
+    // Get uuid and send to server. If it doesn't exist, create it.
+    let uuid = store.get('uuid');
+    if (uuid === undefined) {
+      uuid = uuidv4();
+      store.set('uuid', uuid);
+    }
+
     // Initial ping
-    game.helpers.ping();
+    game.helpers.ping(uuid);
 
     // Load the load scene first
     // Load will get assets ready, perform checks, show powered by husky engine, etc.
@@ -611,6 +618,12 @@ function queue(len) {
   ret.realMax = () => ret._realMax;
 
   return ret;
+}
+
+function uuidv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  )
 }
 
 // Pause/Resume game if screen is visible

@@ -876,10 +876,15 @@ game.helpers.autofps = () => {
   }, 2500);
 };
 
-game.helpers.ping = () => {
+game.helpers.ping = (uuid = undefined) => {
   game.vars._networking.connected = game.socket.connected;
 
-  game.socket.emit('_ping', {data: Date.now()});
+  if (uuid !== undefined) {
+    game.socket.emit('_ping', {data: Date.now(), uuid});
+  } else {
+    game.socket.emit('_ping', {data: Date.now()});
+  }
+
   game.socket.once('_pong', data => {
     if (data.error) console.log(data.error);
     else game.vars._networking.ping.push(Date.now() - data.data);
