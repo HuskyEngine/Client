@@ -1,5 +1,7 @@
 // Set to true to output computed click areas for texts and inputs
 let debug = false;
+let poolsize = 2048;
+let textPool = new Map();
 
 function text(text, info, x, y, canvas=L_MAIN) {
   let size;
@@ -23,7 +25,17 @@ function text(text, info, x, y, canvas=L_MAIN) {
     canvas.ctx.font = size + "px " + game.vars.defaultFont;
   }
 
-  let xCenter = ((canvas.element.width/2)-(canvas.ctx.measureText(text).width/2));
+  let obj = `${text}${info.font}${info.size}${canvas.name}`;
+  let measureText;
+  if (!textPool.has(obj)) {
+    measureText = canvas.ctx.measureText(text);
+    textPool.set(obj, measureText);
+  } else {
+    measureText = textPool.get(obj);
+  }
+  if (textPool.size > poolsize) textPool.delete(textPool.keys().next().value);
+
+  let xCenter = ((canvas.element.width/2)-(measureText.width/2));
   let yCenter = canvas.element.height/2;
 
   // X
