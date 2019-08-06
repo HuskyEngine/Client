@@ -102,6 +102,7 @@ function consoleHandler(key) {
         action() {
           game.helpers.load(command[1], JSON.parse(command[2] || "{}"));
           result = "Loading scene " + (command[1] || "load");
+          game.vars._console.display = false;
         },
         man: `Load the provided scene.`
       },
@@ -251,7 +252,7 @@ function consoleHandler(key) {
       }
     };
 
-    if (key === "Enter" && command[0].length !== 0) {
+    if (key === "Enter" && command.length && command[0].length !== 0) {
       // Reset partial matches
       game.vars._console.match = "";
       game.vars._console.log.unshift('');
