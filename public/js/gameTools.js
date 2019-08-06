@@ -28,7 +28,7 @@ game.helpers.resize = function() {
       $('#canvas')
         .css('margin-top', (window.innerHeight-height)/2 + "px");
     }
-    
+
     $('#canvas')
       .css('width',   width  + "px")
       .css('height',  height + "px");
@@ -70,8 +70,10 @@ game.helpers.resize = function() {
 
     // Set scopes to native resolution if set
     _.forEach(game.scopes, scope => {
-      scope.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
-      scope.element.height = ~~L_MAIN.element.style.height.slice(0, -2);
+      if (scope.nativeResolution) {
+        scope.element.width  = ~~L_MAIN.element.style.width.slice(0, -2);
+        scope.element.height = ~~L_MAIN.element.style.height.slice(0, -2);
+      }
     });
   }
 
@@ -281,37 +283,54 @@ game.helpers.loadTilesheet = (name, path, cb) => {
 
 game.helpers.loadSound = (name, path, cb) => {
   game.assets.sounds[name] = new buzz.sound("sounds/" + path);
-  game.assets.sounds[name].bind("loadstart", () => {
-    cb()
-  });
+  game.assets.sounds[name].load();
+  game.assets.sounds[name].bind('canplaythrough', cb);
+};
 
-  game.assets.sounds[name].bind("playing", () => {
+// game.helpers.loadSound = (name, path, cb) => {
+//   game.assets.sounds[name] = new buzz.sound("sounds/" + path);
+//   game.assets.sounds[name].bind("loadstart", () => {
+//     cb()
+//   });
 
-  });
+//   game.assets.sounds[name].bind("playing", () => {
 
-  game.assets.sounds[name].bind("ended", () => {
+//   });
 
-  });
+//   game.assets.sounds[name].bind("ended", () => {
+
+//   });
+// };
+game.helpers.updateMouse = (event) => {
+  var rect = L_MAIN.element.getBoundingClientRect();
+  game.mouse = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  };
 };
 
 game.helpers.updateButtons = (touches, end = false) => {
   let info = [];
   let affected = [];
 
-  // Update status for all touches
-  Array.prototype.slice.call(touches.changedTouches).forEach(touch => {
+  updateButtonStatus = (touch, mouse = false) => {
     let buttonName = undefined;
-    // convert touch into coors object
-    touch = {
-      id: touch.identifier + 1, // Some browsers use zero-indexed identifiers. Make value+1 to ensure truthiness.
-      x: touch.clientX - game.canvas.rect.left,
-      y: touch.clientY - game.canvas.rect.top,
-      type: end ? "untouch" : "touch" 
-    };
 
-    // Apply multiplier
-    touch.x /= game.canvas.mult.width;
-    touch.y /= game.canvas.mult.height;
+    if (!mouse) {
+      // convert touch into coors object
+      touch = {
+        id: touch.identifier + 1, // Some browsers use zero-indexed identifiers. Make value+1 to ensure truthiness.
+        x: touch.clientX - game.canvas.rect.left,
+        y: touch.clientY - game.canvas.rect.top,
+        type: end ? "untouch" : "touch"
+      };
+
+      // Apply multiplier
+      touch.x /= game.canvas.mult.width;
+      touch.y /= game.canvas.mult.height;
+    } else {
+
+    }
 
     // Check each button to see if it is active
     game.button.names.forEach(button => {
@@ -353,7 +372,14 @@ game.helpers.updateButtons = (touches, end = false) => {
         }
       }
     }
-  });
+  }
+
+  // Update status for all touches
+  if (touches instanceof MouseEvent) {
+    updateButtonStatus(touches, true);
+  } else {
+    Array.prototype.slice.call(touches.changedTouches).forEach(updateButtonStatus, false);
+  }
 
   // Update all affected buttons
   info.forEach(button => {
@@ -446,6 +472,7 @@ game.helpers.loadAssets = (done=undefined) => {
   let sprites    = [];
   let animations = [];
   let tilesheets = [];
+  let sounds     = [];
 
   // Load image assets
   async.series([
@@ -458,7 +485,8 @@ game.helpers.loadAssets = (done=undefined) => {
         sprites    = raw.sprites;
         animations = raw.animations;
         tilesheets = raw.tilesheets;
-        game.local.totalFiles = images.length + sprites.length + animations.length + tilesheets.length;
+        sounds     = raw.sounds;
+        game.local.totalFiles = images.length + sprites.length + animations.length + tilesheets.length + sounds.length;
         cb();
       });
     },
@@ -508,6 +536,17 @@ game.helpers.loadAssets = (done=undefined) => {
     cb => {
       async.eachLimit(tilesheets, 5, (file, loaded) => {
         game.helpers.loadTilesheet(file, file, () => {
+          game.local.fileName = file;
+          game.local.filesLoaded++;
+          loaded();
+        });
+      }, cb);
+    },
+
+    // Load all sounds
+    cb => {
+      async.eachLimit(sounds, 5, (file, loaded) => {
+        game.helpers.loadSound(file, file, () => {
           game.local.fileName = file;
           game.local.filesLoaded++;
           loaded();
@@ -750,7 +789,9 @@ game.helpers.scope = (name, width=-1, height=-1) => {
   let scope = {
     ctx:     null,
     element: document.createElement("canvas"),
-    rect:    null
+    rect:    null,
+    scope:   true,
+    mouse:   {x: 0, y: 0}
   };
 
   scope.nativeResolution = width === -1 && height === -1;
@@ -774,6 +815,13 @@ game.helpers.scope = (name, width=-1, height=-1) => {
   scope.yCenter = scope.element.height/2;
 
   return scope;
+};
+
+game.helpers.mouseWithin = (x1, y1, x2, y2, canvas=L_MAIN) => {
+  return canvas.mouse.x >= x1 &&
+    canvas.mouse.x <= x2 &&
+    canvas.mouse.y >= y1 &&
+    canvas.mouse.y <= y2;
 };
 
 game.helpers.renderControls = () => {

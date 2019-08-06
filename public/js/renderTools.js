@@ -7,20 +7,20 @@ function text(text, info, x, y, canvas=L_MAIN) {
   let size;
   if (typeof info === "object") {
     let ratio = info.size / game.settings.baseFont;
-    let size = L_MAIN.element.width * ratio;
+    let size = canvas.element.width * ratio;
 
     canvas.ctx.font = `${size}px ${info.font}`;
     size = info.size;
   } else if (typeof info === "number") {
     let ratio = info / game.settings.baseFont;
-    let size = L_MAIN.element.width * ratio;
+    let size = canvas.element.width * ratio;
 
     canvas.ctx.font = size + "px " + game.vars.defaultFont;
   } else {
     let ind = info.indexOf('pt');
     info = info.slice(0, ind) + info.slice(ind);
     let ratio = info / game.settings.baseFont;
-    let size = L_MAIN.element.width * ratio;
+    let size = canvas.element.width * ratio;
 
     canvas.ctx.font = size + "px " + game.vars.defaultFont;
   }
@@ -271,12 +271,21 @@ function box(contents, info, x, y, canvas=L_MAIN) {
 }
 
 function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, dWidth=null, dHeight=null, canvas=L_MAIN) {
+  if (arguments[arguments.length - 1].scope !== undefined) canvas = arguments[arguments.length - 1];
+  
+  let scope = false;
   if (typeof image === "string") {
     image = game.assets.images[image];
   }
 
   if (image === undefined) {
     game.helpers.load('error', {type: "IMAGE_NOT_FOUND", msg: `Attempt to draw image "${image}" failed.`});
+  }
+
+  if (image.scope === true) {
+    scope = true;
+    oScope = image;
+    image = image.element;
   }
 
   let xCenter = canvas.element.width/2;
@@ -318,6 +327,19 @@ function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, d
     } else {
       dx.ctx.drawImage(image, sx, sy, sWidth, sHeight);
     }
+
+    if (scope) {
+      let xDiff = game.mouse.x - sx;
+      let yDiff = game.mouse.y - sy;
+
+      if (game.mouse.x - sx >= 0) {
+        oScope.mouse.x = (xDiff * oScope.element.width) / sWidth;
+      }
+
+      if (game.mouse.y - sy >= 0) {
+        oScope.mouse.y = (yDiff * oScope.element.height) / sHeight;
+      }
+    }
   } else {
     if (dx === "center") dx = xCenter;
     else if (typeof dx === "string" && dx.slice(-2) === "px") dx = Number(dx.slice(0, -2).trim());
@@ -339,7 +361,6 @@ function drawImage(image, sx, sy, sWidth=null, sHeight=null, dx=null, dy=null, d
     else dHeight = Number(dHeight) * .01 * canvas.element.height;
     if (Number.isNaN(dHeight)) dHeight = yCenter;
 
-    console.log("draw");
     canvas.ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
   }
 }

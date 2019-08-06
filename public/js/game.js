@@ -35,6 +35,8 @@ let game = {
     held:  {}
   },
 
+  mouse: {},
+
   // Main canvas
   canvas: {
     ctx:     null,
@@ -132,7 +134,7 @@ let game = {
 
     // Sim/Network info
     _info: {
-      showInfo: true,
+      showInfo: false,
       sim: 0,
       render: 0,
       rate: 0,
@@ -229,6 +231,9 @@ $(() => {
   L_MAIN.ctx  = L_MAIN.element.getContext('2d');
   L_MAIN.rect = L_MAIN.element.getBoundingClientRect();
   L_MAIN.name = "main";
+  L_MAIN.scope = true;
+  L_MAIN.mouse = {x: 0, y: 0};
+
 
   // Set up game and ui layers
   L_GAME = game.layers.game;
@@ -238,6 +243,8 @@ $(() => {
   L_GAME.ctx  = L_GAME.element.getContext('2d');
   L_GAME.rect = L_GAME.element.getBoundingClientRect();
   L_GAME.name = "game";
+  L_GAME.scope = true;
+  L_GAME.mouse = {x: 0, y: 0};
 
   L_UI = game.layers.ui;
   L_UI.element = document.createElement("canvas");
@@ -246,7 +253,8 @@ $(() => {
   L_UI.ctx     = L_UI.element.getContext('2d');
   L_UI.rect    = L_UI.element.getBoundingClientRect();
   L_UI.name    = "UI";
-
+  L_UI.scope = true;
+  L_UI.mouse = {x: 0, y: 0};
 
   // Keep things pixelated
   L_MAIN.ctx.imageSmoothingEnabled = false;
@@ -260,6 +268,23 @@ $(() => {
     alert('Please install to your homescreen plox');
   }
   */
+
+  // Mouse detection
+  canvas.addEventListener("mousemove", e => {
+    e.preventDefault();
+    game.helpers.updateMouse(e);
+  }, false);
+
+  // Click detection
+  canvas.addEventListener("mousedown", e => {
+    e.preventDefault();
+    game.helpers.updateButtons(e);
+  }, false);
+
+  canvas.addEventListener("mouseup", e => {
+    e.preventDefault();
+    game.helpers.updateButtons(e, true);
+  }, false);
 
   // Touch detection
   canvas.addEventListener("touchstart", e => {
@@ -335,7 +360,7 @@ $(() => {
 
 /* Order of execution
   game.helpers.load('scene')
-  
+
   load -> init(cb) -> logicLoop (runs at least once before render loop) -> render
 */
 
@@ -425,7 +450,7 @@ function render() {
         let pingText = `ping: ${game.vars._networking.ping.avg().toFixed(0)} ms`;
         text(pingText, {size: 18, font: "Arial"}, 0, line*7, L_UI);
         width = L_UI.ctx.measureText(pingText).width + 10 + "px";
-        drawImage(game.helpers.scope('ping').element, width, line*7-2.4, 1.5, 2.5, L_UI);
+        drawImage(game.helpers.scope('ping'), width, line*7-2.4, 1.5, 2.5, L_UI);
       }
 
       let pos = game.helpers.getPos();
@@ -462,8 +487,8 @@ function render() {
 
     game.vars._info.lastFrameCalled = Date.now();
     game.vars._info.render = Date.now() - game.vars._info.renderLastCalled;
-    L_MAIN.ctx.drawImage(L_GAME.element, 0, 0, L_MAIN.element.width, L_MAIN.element.height);
-    L_MAIN.ctx.drawImage(L_UI.element,   0, 0, L_MAIN.element.width, L_MAIN.element.height);
+    drawImage(L_GAME, 0, 0, 100, 100);
+    drawImage(L_UI,   0, 0, 100, 100);
 
     // Display Console
     consoleDisplay();
@@ -561,14 +586,14 @@ function logic() {
 
   game.logicLoop.run();
 
-  // Ping every 5 seconds
-  setInterval(game.helpers.ping, 5000);
+  // Ping every 3 seconds
+  setInterval(game.helpers.ping, 3000);
 }
 
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+  return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive
 }
 
 function pause() {
